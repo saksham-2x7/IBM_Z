@@ -1,24 +1,37 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Play, Pause, RotateCcw, ShieldAlert, ShieldCheck, HelpCircle } from 'lucide-react';
+import { remoteScore } from '../lib/remote';
 import { buildFeatures, conformalSet, contributions, FEATURE_LABELS, Model, ReplayPatient, score } from '../lib/model';
 
-interface Props { model: Model; patients: ReplayPatient[] }
+interface Props { model: Model; patients: ReplayPatient[]; remote: string; remoteLabel: string }
 
 const KIND: Record<string, string> = {
   sepsis: 'Develops sepsis', none: 'Stable', postop: 'Post-op tachycardia (confounder)', hypovol: 'Hypovolaemia (confounder)', fever: 'Fever without sepsis (confounder)',
 };
 
-export const ReplayLab: React.FC<Props> = ({ model, patients }) => {
+export const ReplayLab: React.FC<Props> = ({ model, patients, remote, remoteLabel }) => {
   const [idx, setIdx] = useState(0);
   const [hour, setHour] = useState(6);
   const [playing, setPlaying] = useState(false);
   const p = patients[idx];
 
-  const series = useMemo(() => {
+  const local = useMemo(() => {
     const out: (number | null)[] = [];
     for (let h = 0; h < p.vitals.hr.length; h++) out.push(h < 6 || (p.onset !== null && h >= p.onset) ? null : score(model, buildFeatures(p.vitals, h)));
     return out;
   }, [p, model]);
+  const [remoteSeries, setRemoteSeries] = useState<(number | null)[] | null>(null);
+  const [remoteMs, setRemoteMs] = useState<number | null>(null);
+  useEffect(() => {
+    setRemoteSeries(null);
+    if (!remote) return;
+    const hs = local.map((v, h) => (v === null ? -1 : h)).filter((h) => h >= 0);
+    const t = performance.now();
+    remoteScore(remote, hs.map((h) => buildFeatures(p.vitals, h)))
+      .then((r) => { const out: (number | null)[] = local.map(() => null); hs.forEach((h, i) => { out[h] = r.risk[i]; }); setRemoteSeries(out); setRemoteMs(performance.now() - t); })
+      .catch(() => setRemoteSeries(null));
+  }, [p, remote, local]);
+  const series = remoteSeries ?? local;
 
   useEffect(() => {
     if (!playing) return;
@@ -71,7 +84,7 @@ export const ReplayLab: React.FC<Props> = ({ model, patients }) => {
         <div className="lg:col-span-2 rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
           <div className="flex items-center justify-between font-mono text-xs text-slate-400">
             <span>Predicted risk of sepsis onset within 6 h</span>
-            <span>Hour {hour} of 47</span>
+            <span>{remoteSeries ? <span className="text-emerald-400">Scored on {remoteLabel}{remoteMs ? ` · ${remoteMs.toFixed(0)} ms round trip` : ""}</span> : "Scored in browser"} · Hour {hour} of 47</span>
           </div>
           <svg viewBox={`0 0 ${W} ${Hh}`} className="mt-2 w-full">
             {[0, .25, .5, .75, 1].map((g) => <g key={g}><line x1={30} x2={W - 10} y1={sy(g)} y2={sy(g)} stroke="#1e293b" /><text x={4} y={sy(g) + 3} fontSize="9" fill="#64748b">{Math.round(g * 100)}%</text></g>)}
