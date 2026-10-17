@@ -229,8 +229,8 @@ export const WardView: React.FC<Props> = ({ model, remote, remoteLabel, onSelect
       <div className="flex items-center gap-2 text-xs text-slate-400">
         <span className="h-2 w-2 rounded-full bg-cyan-400" aria-hidden="true" />
         <span>
-          Scored on: <strong className="font-mono text-slate-200">{tickMs?.where ?? 'browser'}</strong>. Connect an IBM
-          Z endpoint in the IBM Z tab to score all 200 beds on LinuxONE.
+          Scored on: <strong className="font-mono text-slate-200">{tickMs?.where ?? 'browser'}</strong>.
+          {remote ? ' All 200 beds are scored in one batch request on the mainframe.' : ' Connect an IBM Z endpoint in the IBM Z tab to score all 200 beds on LinuxONE.'}
         </span>
       </div>
 

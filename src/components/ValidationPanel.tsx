@@ -69,7 +69,12 @@ export const ValidationPanel: React.FC<{ m: Metrics }> = ({ m }) => {
         <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
           <div className="font-mono text-xs text-slate-400">Warning time before onset (septic patients)</div>
           <div className="mt-4 flex h-40 items-end gap-1">
-            {hist.map((c, i) => <div key={i} className="flex flex-1 flex-col items-center"><div className="w-full rounded-t bg-cyan-500/70" style={{ height: `${(c / hmax) * 100}%` }} /><span className="mt-1 text-[9px] text-slate-500">{i}h</span></div>)}
+            {hist.map((c, i) => (
+              <div key={i} className="flex h-full flex-1 flex-col items-center" title={`${c} patients alerted ${i} h before onset`}>
+                <div className="flex w-full flex-1 items-end"><div className="w-full rounded-t bg-cyan-500/70" style={{ height: `${(c / hmax) * 100}%` }} /></div>
+                <span className="mt-1 text-[9px] text-slate-500">{i}h</span>
+              </div>
+            ))}
           </div>
         </div>
         <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
