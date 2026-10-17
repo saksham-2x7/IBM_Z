@@ -1,10 +1,36 @@
 import React, { useState } from 'react';
 import { Cpu, Cloud, RefreshCw, Info } from 'lucide-react';
 import { buildFeatures, Model, ReplayPatient, score } from '../lib/model';
+import { Health, remoteScore } from '../lib/remote';
 
 interface Result { meanUs: number; p99Us: number; perSec: number; n: number }
 
-export const BenchmarkLab: React.FC<{ model: Model; patients: ReplayPatient[] }> = ({ model, patients }) => {
+interface RemoteRes { rttP50: number; rttP99: number; computeP50: number; maxDiff: number; n: number }
+interface BProps { model: Model; patients: ReplayPatient[]; endpoint: string; setEndpoint: (u: string) => void; info: Health | null }
+
+export const BenchmarkLab: React.FC<BProps> = ({ model, patients, endpoint, setEndpoint, info }) => {
+  const [draft, setDraft] = useState(endpoint);
+  const [rres, setRres] = useState<RemoteRes | null>(null);
+  const [rbusy, setRbusy] = useState(false);
+  const [rerr, setRerr] = useState('');
+  const runRemote = async () => {
+    setRbusy(true); setRerr(''); setRres(null);
+    try {
+      const xs: number[][] = [];
+      for (const p of patients) for (let h = 6; h < 48; h++) xs.push(buildFeatures(p.vitals, h));
+      const rtt: number[] = [], comp: number[] = []; let maxDiff = 0;
+      for (let i = 0; i < 300; i++) {
+        const x = xs[i % xs.length]; const t = performance.now();
+        const r = await remoteScore(endpoint, [x]);
+        rtt.push(performance.now() - t); comp.push(r.compute_us);
+        maxDiff = Math.max(maxDiff, Math.abs(r.risk[0] - score(model, x)));
+      }
+      const q = (a: number[], p: number) => [...a].sort((x, y) => x - y)[Math.min(a.length - 1, Math.floor(a.length * p))];
+      setRres({ rttP50: q(rtt, 0.5), rttP99: q(rtt, 0.99), computeP50: q(comp, 0.5), maxDiff, n: rtt.length });
+    } catch (e) { setRerr('Could not reach the endpoint. Is ml/serve.py running and reachable?'); }
+    setRbusy(false);
+  };
+
   const [res, setRes] = useState<Result | null>(null);
   const [busy, setBusy] = useState(false);
   const [rtt, setRtt] = useState(40);
@@ -36,6 +62,35 @@ export const BenchmarkLab: React.FC<{ model: Model; patients: ReplayPatient[] }>
   const cloud = rtt + queue + compute;
   return (
     <div className="space-y-5 p-4 md:p-6 max-w-7xl mx-auto">
+      <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h2 className="text-lg font-bold text-white">Run the model on IBM LinuxONE</h2>
+          <span className={`rounded-full px-3 py-1 text-xs font-mono ${info ? 'bg-emerald-950 text-emerald-400 border border-emerald-800' : 'bg-slate-800 text-slate-400'}`}>
+            {info ? `connected · ${info.system} · ${info.arch}${info.machine ? ` · machine ${info.machine}` : ''}${info.nnpa ? ' · NNPA present' : ''}` : 'not connected'}
+          </span>
+        </div>
+        <div className="mt-4 flex flex-wrap gap-2">
+          <input value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="http://<LinuxONE-VM-IP>:8080" className="min-w-[260px] flex-1 rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 font-mono text-sm text-slate-100" />
+          <button onClick={() => setEndpoint(draft)} className="rounded-lg bg-cyan-500 px-4 py-2 text-sm font-semibold text-slate-950 hover:brightness-110">Connect</button>
+          <button onClick={runRemote} disabled={!info || rbusy} className="rounded-lg border border-slate-600 px-4 py-2 text-sm text-slate-200 hover:bg-slate-800 disabled:opacity-40">{rbusy ? 'Measuring…' : 'Benchmark remote (300 requests)'}</button>
+        </div>
+        {rerr && <div className="mt-3 text-sm text-amber-400">{rerr}</div>}
+        {rres && (
+          <div className="mt-4 grid grid-cols-2 gap-3 text-center font-mono md:grid-cols-4">
+            {[['Round trip P50', `${rres.rttP50.toFixed(1)} ms`], ['Round trip P99', `${rres.rttP99.toFixed(1)} ms`], ['Server compute P50', `${rres.computeP50.toFixed(1)} µs`], ['Max |remote − local|', rres.maxDiff.toExponential(1)]].map(([k, v]) => (
+              <div key={k} className="rounded-xl bg-slate-950 p-3"><div className="text-[11px] text-slate-500">{k}</div><div className="text-xl font-bold text-emerald-400">{v}</div></div>
+            ))}
+          </div>
+        )}
+        <details className="mt-4 text-sm text-slate-400">
+          <summary className="cursor-pointer text-slate-300">How to start the server on the VM (no installs needed)</summary>
+          <pre className="mt-2 overflow-x-auto rounded-lg bg-slate-950 p-3 text-xs text-slate-300">{`# on your Mac: copy the project's model + server to the VM
+scp -i ercinent.pem -r ml public linux1@<VM-IP>:~/auraz/
+# on the VM:
+cd ~/auraz && nohup python3 ml/serve.py 8080 > serve.log 2>&1 &`}</pre>
+          <p className="mt-2">Open TCP 8080 in the LinuxONE security group, then paste <code>http://&lt;VM-IP&gt;:8080</code> above. The Live Replay tab will then score every hour on the mainframe.</p>
+        </details>
+      </div>
       <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6">
         <span className="rounded bg-cyan-950 px-2 py-0.5 font-mono text-xs font-semibold text-cyan-400 border border-cyan-800/50">MEASURED, NOT CLAIMED</span>
         <h2 className="mt-2 text-2xl font-bold font-mono text-white">Latency lab: in-process inference vs a cloud round trip</h2>
