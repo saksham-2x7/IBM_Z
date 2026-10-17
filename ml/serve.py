@@ -3,7 +3,7 @@
 GET  /health  -> platform facts (arch, IBM machine type, NNPA flag) read from the host
 POST /score   -> {"batch": [[16 features], ...]} -> {"risk": [...], "compute_us": float, "server": {...}}
 """
-import json, math, os, platform, sys, time
+import json, math, os, platform, re, sys, time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "public")
@@ -14,9 +14,8 @@ def host():
     info = dict(arch=platform.machine(), python=platform.python_version(), machine=None, nnpa=False)
     try:
         txt = open("/proc/cpuinfo").read()
-        for line in txt.splitlines():
-            if line.startswith("machine"):
-                info["machine"] = line.split("=")[-1].strip().split(",")[0]; break
+        m = re.search(r"machine\s*[:=]\s*(\d+)", txt)
+        info["machine"] = m.group(1) if m else None
         info["nnpa"] = " nnpa" in txt
     except OSError:
         pass
@@ -32,6 +31,7 @@ def score(x):
     return 1 / (1 + math.exp(-z))
 
 class H(BaseHTTPRequestHandler):
+    protocol_version = "HTTP/1.1"  # keep-alive: one TCP connection for many requests
     def _send(self, code, obj):
         body = json.dumps(obj).encode()
         self.send_response(code)
