@@ -5,6 +5,7 @@ import { ArchitectureExplorer } from './components/ArchitectureExplorer';
 import { SubmissionHub } from './components/SubmissionHub';
 import { ReplayLab } from './components/ReplayLab';
 import { ValidationPanel } from './components/ValidationPanel';
+import { WardView } from './components/WardView';
 import { useArtifacts } from './lib/model';
 import { Health, health } from './lib/remote';
 
@@ -35,7 +36,8 @@ export const App: React.FC = () => {
         {tab === 'validation' && (art ? <ValidationPanel m={art.metrics} /> : <Loading />)}
         {tab === 'ibmz' && (art ? <BenchmarkLab model={art.model} patients={art.replay} endpoint={endpoint} setEndpoint={setEndpoint} info={info} /> : <Loading />)}
         {tab === 'architecture' && <ArchitectureExplorer />}
-        {tab === 'submission' && <SubmissionHub />}
+        {tab === 'ward' && (art ? <WardView model={art.model} remote={remote} remoteLabel={label} /> : <Loading />)}
+        {tab === 'submission' && (art ? <SubmissionHub m={art.metrics} /> : <Loading />)}
       </main>
       <footer className="border-t border-slate-900 px-6 py-4 text-center text-xs text-slate-500">
         AuraZ · IBM Z Datathon 2026 · Technology for Good · Research prototype on a simulated cohort, not a medical device
