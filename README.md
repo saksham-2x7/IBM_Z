@@ -14,7 +14,7 @@ AuraZ scores ICU vitals every hour and warns clinicians hours before sepsis onse
 | Latency Lab | **Measured** on the viewer's CPU. Cloud path is a labelled, adjustable assumption |
 | IBM Z Telum II hardware numbers | **Not yet measured.** Next milestone: LinuxONE Community Cloud + ONNX / zDLC |
 | IBM LinuxONE inference service (`ml/serve.py`) | **Real.** Standard-library Python, runs on s390x with nothing to install; the app's Live Replay and 200-bed Ward score on it once connected, and the IBM Z tab verifies remote = local results |
-| PhysioNet 2019 retraining (`ml/train_physionet.py`) | **Run on a 772-stay sample: AUROC 0.62 (95% CI 0.48–0.73) — the simulated results do not transfer.** See `docs/REAL_DATA_PILOT.md` |
+| PhysioNet 2019 retraining (`ml/train_physionet.py`) | **Run on 4,989 real stays (289 septic): AUROC 0.61 (95% CI 0.56–0.65); gradient boosting 0.68. The simulated results do not transfer.** See `docs/REAL_DATA_PILOT.md` |
 
 ## Held-out results (simulated cohort, 3,000 test stays)
 
