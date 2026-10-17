@@ -1,0 +1,132 @@
+{
+ "n_stays": 5562,
+ "septic": 342,
+ "cross_hospital": {
+  "train_A_test_B": {
+   "train_stays": 1513,
+   "test_stays": 3040,
+   "test_septic": 142,
+   "auroc": 0.7429107923559054,
+   "auroc_ci95": [
+    0.7008931762334552,
+    0.7825582904759296
+   ],
+   "conformal": {
+    "coverage_septic_hours": 0.7657213316892725,
+    "coverage_nonseptic_hours": 0.9415742577310052,
+    "uncertain_fraction": 0.3929510569337709
+   }
+  },
+  "train_B_test_A": {
+   "train_stays": 1824,
+   "test_stays": 2522,
+   "test_septic": 200,
+   "auroc": 0.7298036699111953,
+   "auroc_ci95": [
+    0.6946818355178362,
+    0.7668976088093934
+   ],
+   "conformal": {
+    "coverage_septic_hours": 0.8726169844020797,
+    "coverage_nonseptic_hours": 0.8171511627906977,
+    "uncertain_fraction": 0.5065341519936928
+   }
+  }
+ },
+ "pooled_split": {
+  "test_stays": 1113,
+  "test_septic": 76,
+  "auroc": 0.7845616869933943,
+  "auroc_ci95": [
+   0.7391080608018137,
+   0.8316755349493234
+  ],
+  "conformal": {
+   "coverage_septic_hours": 0.8532110091743119,
+   "coverage_nonseptic_hours": 0.8913006709139087,
+   "uncertain_fraction": 0.3796157059314954
+  }
+ },
+ "subgroups": {
+  "operating_point": "alert if risk >= 0.0291 (top 5% of all held-out patient-hours)",
+  "sex=female": {
+   "stays": 493,
+   "septic_stays": 26,
+   "auroc": 0.7972012330911884,
+   "auroc_ci95": [
+    0.7267067316151459,
+    0.8757497786649177
+   ],
+   "alert_rate_pct": 4.1418995826482865,
+   "sensitivity_hour_pct": 39.735099337748345,
+   "coverage_septic_hours": 0.8344370860927153,
+   "coverage_nonseptic_hours": 0.9085105024580221
+  },
+  "sex=male": {
+   "stays": 620,
+   "septic_stays": 50,
+   "auroc": 0.7737000620778638,
+   "auroc_ci95": [
+    0.7138178522684461,
+    0.8290623504838681
+   ],
+   "alert_rate_pct": 5.677746815286625,
+   "sensitivity_hour_pct": 26.666666666666668,
+   "coverage_septic_hours": 0.8631578947368421,
+   "coverage_nonseptic_hours": 0.8776942102872142
+  },
+  "age<50": {
+   "stays": 250,
+   "septic_stays": 17,
+   "auroc": 0.744493509730952,
+   "auroc_ci95": [
+    0.6345420873248764,
+    0.8676535171206997
+   ],
+   "alert_rate_pct": 7.942371629109715,
+   "sensitivity_hour_pct": 38.775510204081634,
+   "coverage_septic_hours": 0.7959183673469388,
+   "coverage_nonseptic_hours": 0.8499314470896173
+  },
+  "age 50-64": {
+   "stays": 342,
+   "septic_stays": 23,
+   "auroc": 0.8154918656974731,
+   "auroc_ci95": [
+    0.7435720355563505,
+    0.8812091945782767
+   ],
+   "alert_rate_pct": 4.4946931241347485,
+   "sensitivity_hour_pct": 28.888888888888886,
+   "coverage_septic_hours": 0.8814814814814815,
+   "coverage_nonseptic_hours": 0.8978504672897196
+  },
+  "age 65-74": {
+   "stays": 274,
+   "septic_stays": 22,
+   "auroc": 0.766346303498445,
+   "auroc_ci95": [
+    0.6855788928473819,
+    0.8670572686979174
+   ],
+   "alert_rate_pct": 5.043668122270742,
+   "sensitivity_hour_pct": 30.89430894308943,
+   "coverage_septic_hours": 0.8617886178861789,
+   "coverage_nonseptic_hours": 0.8985282726568552
+  },
+  "age>=75": {
+   "stays": 247,
+   "septic_stays": 14,
+   "auroc": 0.8188212989369976,
+   "auroc_ci95": [
+    0.7116908509170808,
+    0.923592658052719
+   ],
+   "alert_rate_pct": 2.5917372337695666,
+   "sensitivity_hour_pct": 26.25,
+   "coverage_septic_hours": 0.8625,
+   "coverage_nonseptic_hours": 0.9167746953590874
+  }
+ },
+ "runtime_s": 29.2
+}

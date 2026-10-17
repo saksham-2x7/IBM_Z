@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { Metrics, RealMetrics } from '../lib/model';
+import { Audit, AuditGroup, Metrics, RealMetrics } from '../lib/model';
 
 const pct = (v: number, d = 0) => `${(v * 100).toFixed(d)}%`;
 
 export const ValidationPanel: React.FC<{ m: Metrics }> = ({ m }) => {
   const [real, setReal] = useState<RealMetrics | null>(null);
+  const [audit, setAudit] = useState<Audit | null>(null);
+  useEffect(() => { fetch(`${import.meta.env.BASE_URL}audit_physionet.json`).then((r) => (r.ok ? r.json() : null)).then(setAudit).catch(() => setAudit(null)); }, []);
   useEffect(() => { fetch(`${import.meta.env.BASE_URL}metrics_physionet.json`).then((r) => r.json()).then(setReal).catch(() => setReal(null)); }, []);
   const a = m.alerting, W = 300, H = 220;
   const roc = m.roc.fpr.map((f, i) => `${30 + f * (W - 40)},${H - 24 - m.roc.tpr[i] * (H - 40)}`).join(' ');
@@ -46,6 +48,35 @@ export const ValidationPanel: React.FC<{ m: Metrics }> = ({ m }) => {
             It reaches AUROC {real.auroc.toFixed(2)} on real held-out patients (still {real.ablations.without_icu_time.toFixed(2)} without ICU-time features) and keeps its uncertainty guarantee.
             It is a 4,989-stay sample with {real.cohorts.test_septic} septic test stays, so the confidence interval is wide; this is research evidence, not clinical validation.
           </p>
+        </div>
+      )}
+      {audit && (
+        <div className="rounded-2xl border border-slate-700 bg-slate-900/60 p-5">
+          <h3 className="font-semibold text-white">External validation and fairness audit · PhysioNet 2019</h3>
+          <p className="mt-1 text-sm text-slate-400">Hospitals A and B are different sites, so training on one and testing on the other is a real external test. {audit.n_stays.toLocaleString()} stays, {audit.septic} septic.</p>
+          <table className="mt-3 w-full text-sm font-mono">
+            <thead><tr className="text-left text-xs text-slate-500"><th className="py-1">Test</th><th>AUROC (95% CI)</th><th>Septic · non-septic coverage (target 90%)</th></tr></thead>
+            <tbody>
+              <tr className="border-t border-slate-800"><td className="py-2 text-slate-300">Same pool (random patients)</td><td className="text-emerald-400">{audit.pooled_split.auroc.toFixed(3)} ({audit.pooled_split.auroc_ci95[0]?.toFixed(2)}–{audit.pooled_split.auroc_ci95[1]?.toFixed(2)})</td><td className="text-slate-500">see above</td></tr>
+              {Object.entries(audit.cross_hospital).map(([k, x]) => (
+                <tr key={k} className="border-t border-slate-800"><td className="py-2 text-slate-300">{k.replace('train_', 'Train ').replace('_test_', ' → test ')} ({x.test_septic} septic)</td>
+                  <td className="text-amber-300">{x.auroc.toFixed(3)} ({x.auroc_ci95[0]?.toFixed(2)}–{x.auroc_ci95[1]?.toFixed(2)})</td>
+                  <td className="text-amber-300">{x.conformal.coverage_septic_hours !== null ? pct(x.conformal.coverage_septic_hours, 0) : '—'} · {pct(x.conformal.coverage_nonseptic_hours, 0)}</td></tr>
+              ))}
+            </tbody>
+          </table>
+          <p className="mt-2 text-xs text-slate-400">Across hospitals discrimination drops and the uncertainty guarantee weakens, so each hospital must recalibrate before use.</p>
+          <table className="mt-4 w-full text-sm font-mono">
+            <thead><tr className="text-left text-xs text-slate-500"><th className="py-1">Subgroup ({String(audit.subgroups.operating_point)})</th><th>Septic stays</th><th>AUROC</th><th>Alert rate</th><th>Septic hours alerted</th></tr></thead>
+            <tbody>
+              {Object.entries(audit.subgroups).filter(([k]) => k !== 'operating_point').map(([k, g]) => { const x = g as AuditGroup; return (
+                <tr key={k} className="border-t border-slate-800"><td className="py-1.5 text-slate-300">{k}</td><td className="text-slate-400">{x.septic_stays ?? '—'}</td>
+                  <td className="text-slate-200">{x.auroc !== undefined ? x.auroc.toFixed(3) : (x.note ?? '—')}</td>
+                  <td className="text-slate-400">{x.alert_rate_pct !== undefined ? `${x.alert_rate_pct.toFixed(1)}%` : '—'}</td>
+                  <td className="text-slate-400">{x.sensitivity_hour_pct !== undefined ? `${x.sensitivity_hour_pct.toFixed(0)}%` : '—'}</td></tr>); })}
+            </tbody>
+          </table>
+          <p className="mt-2 text-xs text-slate-400">Small subgroups have wide confidence intervals; differences here are a screening signal, not proof of bias.</p>
         </div>
       )}
       <div className="grid gap-5 md:grid-cols-4">
