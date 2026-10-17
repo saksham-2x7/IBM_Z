@@ -1,4 +1,4 @@
-# Tasks for Jyothi (no AI tool needed) — verification, QA and submission
+# Tasks for Jyothi (Antigravity, light workload) — verification, QA and submission
 
 You are the team's quality gate. Work on your own branch `jyothi/qa` or just send results in the group chat.
 

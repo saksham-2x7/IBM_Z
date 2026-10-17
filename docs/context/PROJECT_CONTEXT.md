@@ -9,13 +9,13 @@ Repo: https://github.com/saksham-2x7/IBM_Z  ·  Stack: Python (stdlib + numpy/sk
 | Item | Status |
 |---|---|
 | Training/validation pipeline `ml/train.py` | Real, runs. Data is a **simulated** ICU cohort (confounders, sparse labs) |
-| Real-data retrain `ml/train_physionet.py` | Written and tested on PhysioNet-format files; real PhysioNet 2019 run is in progress (Claude/Saksham own it) |
+| Real-data retrain `ml/train_physionet.py` | Run on a 772-stay PhysioNet 2019 sample: **AUROC 0.62 (95% CI 0.48–0.73) — simulated results do NOT transfer.** See `docs/REAL_DATA_PILOT.md`. Always disclose this |
 | Model + browser scoring `public/model.json`, `src/lib/model.ts` | Real |
 | IBM LinuxONE inference service `ml/serve.py` | Real. Verified on a real **IBM z17 (machine 9175, Telum II, `nnpa` flag present)**: remote scores equal local scores exactly, ~12 µs server compute. Runs on CPU, **NOT yet on the NNPA accelerator** |
 | Telum II / NNPA acceleration (ONNX + zDLC) | **Not done** (roadmap). Never claim it |
 | Clinical validity | **Not** validated on patients. Research prototype, not a medical device |
 
-Held-out results on the simulated cohort (source of truth: `public/metrics.json`): AUROC 0.818 (95% CI 0.805–0.832); AuraZ catches 75% of septic patients early vs 48% for the classic SIRS≥2 rule, with 11.7 vs 47.3 false alerts per 100 patient-days; conformal coverage 89.8% at a 90% target.
+Held-out results on the **simulated** cohort (a method demo, NOT clinical performance) (source of truth: `public/metrics.json`): AUROC 0.818 (95% CI 0.805–0.832); AuraZ catches 75% of septic patients early vs 48% for the classic SIRS≥2 rule, with 11.7 vs 47.3 false alerts per 100 patient-days; conformal coverage 89.8% at a 90% target.
 
 ## Golden rules
 1. **No invented numbers.** Every metric/claim comes from `public/metrics.json`, a script in the repo, or a source URL you verified. If you can't source it, delete it.
