@@ -141,7 +141,7 @@ def main():
         if k_ not in cache: cache[k_] = score(p, h)
         return cache[k_]
     thr, BUDGET = .95, 15.0  # most sensitive threshold within a false-alert budget (alerts / 100 patient-days)
-    for t in np.arange(.95, .04, -.025):
+    for t in np.concatenate([np.arange(.95, .05, -.025), np.geomspace(.05, .002, 24)]):
         r = summarize(cal, alerts(cal, lambda p, h: sc(p, h) >= t))
         if r["false_alerts_per_100_patient_days"] > BUDGET: break
         thr = float(t)
