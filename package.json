@@ -1,7 +1,7 @@
 {
   "name": "auraz-ibm-z",
   "version": "1.0.0",
-  "description": "AuraZ: Sub-Millisecond Multi-Bed ICU Sepsis & Decompensation Interceptor on IBM Z Telum Pipeline",
+  "description": "AuraZ: explainable, calibrated ICU sepsis early warning with a dependency-free inference service verified on IBM LinuxONE (z17)",
   "type": "module",
   "scripts": {
     "dev": "vite",

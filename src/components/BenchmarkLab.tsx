@@ -130,7 +130,7 @@ cd ~/auraz && nohup python3 ml/serve.py 8080 > serve.log 2>&1 &`}</pre>
       <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6">
         <span className="rounded bg-cyan-950 px-2 py-0.5 font-mono text-xs font-semibold text-cyan-400 border border-cyan-800/50">MEASURED, NOT CLAIMED</span>
         <h2 className="mt-2 text-2xl font-bold font-mono text-white">Latency lab: in-process inference vs a cloud round trip</h2>
-        <p className="mt-1 text-sm text-slate-400 max-w-3xl">Run the real exported model on this device. In-process scoring (no network hop) is the architectural idea IBM Z's on-chip accelerator takes to its limit. The cloud path is a model you can tune: it is an assumption, not a measurement.</p>
+        <p className="mt-1 text-sm text-slate-400 max-w-3xl">Run the real exported model on this device. In-process scoring has no network hop; IBM Z lets that scoring sit beside the transactional data itself. The cloud path is a model you can tune: it is an assumption, not a measurement.</p>
         <button onClick={run} disabled={busy} className="mt-4 flex items-center gap-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 px-5 py-3 text-sm font-bold text-slate-950 disabled:opacity-50">
           <RefreshCw className={`h-4 w-4 ${busy ? 'animate-spin' : ''}`} />{busy ? 'Scoring…' : 'Score 100,000 patient-hours now'}
         </button>
@@ -157,7 +157,7 @@ cd ~/auraz && nohup python3 ml/serve.py 8080 > serve.log 2>&1 &`}</pre>
       <div className="flex gap-3 rounded-2xl border border-slate-800 bg-slate-900/60 p-5 text-sm text-slate-300">
         <Info className="mt-0.5 h-5 w-5 shrink-0 text-cyan-400" />
         <div>
-          <b>Why this matters for IBM Z:</b> at hospital scale, scoring happens inside the transaction path where the monitor data already lives, so there is no network hop to tune, throttle or leak. The target runtime is Telum II via ONNX / IBM Z Deep Learning Compiler on LinuxONE. Hardware numbers are the next milestone: we will measure them on the IBM LinuxONE Community Cloud and publish them here, whatever they are.
+          <b>Why this matters for IBM Z:</b> at hospital scale, scoring happens inside the transaction path where the monitor data already lives, so there is no network hop to tune, throttle or leak. Measured above on a real IBM z17 through the LinuxONE Community Cloud, on the CPU. Next: compile the models for the Telum II on-chip accelerator via ONNX and the IBM Z Deep Learning Compiler, and publish the CPU vs NNPA numbers here.
         </div>
       </div>
     </div>

@@ -9,7 +9,7 @@
 
 ## Technical & Clinical Disclosures (Golden Rules)
 1. **Data Source:** Primary evaluation runs on a simulated ICU cohort (clinically parameterized with clinical confounders and sparse labs; 3,000 held-out test stays).
-2. **Real-Data Pilot:** When evaluated on real clinical data in `docs/REAL_DATA_PILOT.md` (**4,989 usable stays, 289 septic** from PhysioNet 2019), the deployed logistic model achieves **AUROC 0.608 (95% CI 0.560–0.653)** (with gradient-boosting achieving 0.677). Simulated-cohort performance does **not** transfer out-of-the-box to real clinical data. Full 40k-stay retraining, additional challenge variables, and gradient-boosted architectures are roadmap milestones.
+2. **Real ICU data:** On PhysioNet 2019 (4,989 stays, 998 held out), our first 16-feature model got only AUROC 0.61, so we built **AuraZ-R** (gradient-boosted trees, all 34 clinical variables + measurement recency): **AUROC 0.775 (95% CI 0.72–0.82)**, 0.73 without ICU-time features. At SIRS's alarm rate it catches 94% of septic patients early vs 88%. See `docs/REAL_DATA_PILOT.md`.
 3. **Hardware Status:** IBM LinuxONE inference service (`ml/serve.py`) was verified on a real **IBM z17 (Machine 9175, Telum II, `nnpa` flag present)**. Remote scoring matches browser scoring bit-for-bit with ~12 µs server compute. Inference currently **runs on CPU; NNPA on-chip acceleration via ONNX / zDLC is next on the roadmap**.
 4. **Clinical Scope:** AuraZ is an academic research prototype, not an FDA-cleared medical device.
 
@@ -21,8 +21,8 @@
 | :--- | :--- | :--- | :--- |
 | **0:00 – 0:35** | Flow 1: Early Sepsis Detection | **Live Replay** | TEST-01 alerts at hour 19 (2 h before onset at h21); conformal set; plain English SHAP driver. |
 | **0:35 – 1:10** | Flow 2: Confounder Suppression | **Live Replay** | Look-alike non-septic patient (TEST-08 hypovolaemia or TEST-05 stable) does *not* trigger false alarms. |
-| **1:10 – 1:50** | Flow 3: Clinical Benchmarking | **Validation** | AUROC 0.818; 75% sensitivity vs 48% SIRS; 11.7 vs 47.3 false alerts / 100 patient-days; honest 4,989-stay pilot disclosure. |
-| **1:50 – 2:25** | Flow 4: LinuxONE Mainframe Co-Location | **IBM Z** | Machine 9175 / Telum II verification; CPU inference; remote = local exact match; NNPA is next. |
+| **1:10 – 1:50** | Flow 3: Clinical Benchmarking | **Validation** | AUROC 0.818; 75% sensitivity vs 48% SIRS; 11.7 vs 47.3 false alerts / 100 patient-days; real-data AuraZ-R AUROC 0.775 vs SIRS. |
+| **1:50 – 2:25** | Flow 4: LinuxONE Mainframe Co-Location | **IBM Z** | z17 machine 9175; demo model + real-data trees run on it; remote = local exact match; CPU now, NNPA is next. |
 | **2:25 – 3:00** | Flow 5: Ward-Scale Telemetry | **Ward** | 200 ICU beds batch-scored every hour; click-through drill-down into replay for any ward bed. |
 
 ---
@@ -61,30 +61,30 @@
 - **Target Tab:** Click `Validation` in the header tab bar.
 - **Exact Action:**
   1. Scroll down to show the validation cards and the comparative alert burden table against the classic SIRS (Systemic Inflammatory Response Syndrome) rule.
-  2. Highlight the model AUROC of **0.818 (95% CI 0.805–0.832)**, AUPRC **0.304**, and conformal empirical coverage of **89.8%** against the 90% target.
+  2. Highlight the model AUROC of **0.818 (95% CI 0.805–0.832)**, AUPRC **0.304**, and class-conditional conformal coverage of **92.4% (septic hours) and 89.6% (non-septic hours)** against a 90% target.
   3. Highlight the comparative table: **75% vs 48%** septic patients caught early, and **11.7 vs 47.3** false alerts per 100 patient-days.
-  4. Point to the transparency disclosure regarding real clinical data.
+  4. Scroll to the **Real ICU data · AuraZ-R** panel: AUROC 0.775, 0.732 without ICU-time features, and the alerting table vs SIRS.
 - **Narration / Voiceover:**
-  > *"In the Validation tab, we benchmark AuraZ on held-out data. AuraZ achieves an AUROC of 0.818 with calibrated 89.8% conformal coverage against our 90% guarantee.*
+  > *"In the Validation tab, we benchmark AuraZ on held-out data. On our simulated cohort, which includes look-alike patients, AuraZ achieves an AUROC of 0.818, and its uncertainty labels meet the 90% coverage target for both septic and non-septic hours.*
   > 
   > *Under a fixed false-alert budget, AuraZ captures 75% of septic patients early compared to just 48% for the classic SIRS rule, while cutting false alerts from 47.3 down to 11.7 per 100 patient-days.*
   > 
-  > *Crucially, we openly disclose our real-data pilot from docs/REAL_DATA_PILOT.md on 4,989 usable PhysioNet stays, where AUROC was 0.61. We make no exaggerated claims: simulated results do not transfer automatically to noisy hospital EHRs, and deploying gradient-boosted models with more clinical variables is our explicit next milestone."*
+  > *Then real ICU data. On 4,989 PhysioNet stays our first model only reached 0.61, and we say so. So we built AuraZ-R on all 34 clinical variables: AUROC 0.775 on real held-out patients, still 0.73 without ICU-time features, and at the same alarm rate as SIRS it catches 94% of septic patients early versus 88%."*
 
 ---
 
-### 1:50 – 2:25 · Flow 4: IBM LinuxONE In-Transaction Scoring & Zero-Egress
+### 1:50 – 2:25 · Flow 4: Scoring on IBM LinuxONE (z17)
 - **Target Tab:** Click `IBM Z` in the header tab bar.
 - **Exact Action:**
   1. Point to the status indicator showing active connection to the inference service (`ml/serve.py`).
   2. Click **Benchmark remote (40 requests)** and review the telemetry:
      - `Server compute P50: ~12 µs` (or local benchmark microseconds)
      - `Max |remote - local|: 0.0e+0` (exact numerical match)
-  3. Click **Score 100,000 patient-hours now** in the Latency Lab to demonstrate in-process mainframe inference vs high-latency cloud round-trips.
+  3. Click **Run AuraZ-R real-data trees on this host (300 trees)**: 300 real held-out PhysioNet rows are scored on the mainframe, with `Max |remote − browser|` and `Max |browser − sklearn|` both `0.0e+0` and about 250 µs per row.
 - **Narration / Voiceover:**
-  > *"Why IBM Z? Protected health information cannot be broadcast across public cloud APIs due to HIPAA sovereignty and unpredictable network latency. AuraZ scores directly on LinuxONE beside the transaction bus.*
-  > 
-  > *We verified our inference engine on an IBM z17 mainframe—machine type 9175 with the Telum II processor and NNPA capability. Inference currently runs on CPU at approximately 12 microseconds per patient, achieving bit-exact numerical agreement with local scoring. On-chip hardware acceleration using Telum II's Integrated AI Accelerator via ONNX and the IBM Z Deep Learning Compiler is our next roadmap deliverable."*
+  > *"Why IBM Z? Hospital vitals already live in transactional systems, and moving protected health data to an outside service adds obligations, exposure and network delay. AuraZ is built to score where the data already is.*
+  >
+  > *This is a real IBM z17, machine type 9175, Telum II, on the LinuxONE Community Cloud. Both our demo model and our real-data AuraZ-R trees run on it with nothing installed, and the mainframe's answers match our reference exactly. The compute takes microseconds; the 400-millisecond round trip you see is just the distance from our laptop to the data centre, which is the argument for scoring beside the data. Today this runs on the CPU. Compiling the trees for the Telum II on-chip AI accelerator with ONNX and the IBM Z Deep Learning Compiler is our next step."*
 
 ---
 
@@ -100,7 +100,7 @@
   > 
   > *Our colorblind-safe matrix immediately surfaces patients needing intervention: orange indicates active alerts, blue shows rising risk, and slate indicates stable beds. Clicking any bed tile instantly opens that patient in Live Replay at the current hour, providing doctors with immediate explainability for rapid clinical response.*
   > 
-  > *AuraZ demonstrates how explainable, zero-egress AI on IBM Z can transform real-time clinical decisions and save lives."*
+  > *AuraZ brings explainable, calibrated sepsis warning to where hospital data already lives: on IBM Z."*
 
 ---
 
@@ -108,7 +108,7 @@
 
 - [x] `01_live_replay_septic.png` — TEST-01 at hour 19; alert fired at h19 (2 h before onset at h21); risk 56%; conformal set; plain English SHAP driver.
 - [x] `02_lookalike_nonseptic.png` — TEST-08 hypovolaemia confounder at hour 20; risk 4% (no alert raised); conformal set: not-at-risk.
-- [x] `03_validation_vs_sirs.png` — Validation tab; AUROC 0.818; 75% vs 48% sensitivity; 11.7 vs 47.3 false alerts / 100 patient-days; honest clinical disclosures.
+- [x] `03_validation_vs_sirs.png` — Validation tab; simulated AUROC 0.818 and the real-data AuraZ-R panel (AUROC 0.775) with the SIRS comparison.
 - [x] `04_ibm_z_remote_verification.png` — Connected to inference service; server compute latency; remote = local exact match; CPU execution with NNPA on roadmap.
 - [x] `05_ward_surveillance.png` — 200-bed matrix; KPI cards; colorblind-safe status palette.
 - [x] `06_conformal_uncertainty.png` — Close-up of conformal set calibration and patient trajectory.

@@ -213,7 +213,7 @@ export const ReplayLab: React.FC<Props> = ({ model, patients, remote, remoteLabe
               Watch the trained model score a held-out patient, hour by hour
             </h2>
             <p className="mt-1 text-sm text-slate-400 max-w-3xl leading-relaxed">
-              Every number below is computed live by the exported model in your browser. These patients were never seen in
+              Every number below is computed live by the exported model, in your browser or on the connected IBM Z host. These patients were never seen in
               training or calibration. Includes look-alike patients (post-op, hypovolaemia, fever) that should not trigger an alert.
             </p>
           </div>
