@@ -2,6 +2,7 @@
     python3 ml/serve.py [port]      # default 8080
 GET  /health  -> platform facts (arch, IBM machine type, NNPA flag) read from the host
 POST /score   -> {"batch": [[16 features], ...]} -> {"risk": [...], "compute_us": float, "server": {...}}
+POST /score_real -> same, for the AuraZ-R real-data trees ({"batch": [[108 features or null], ...]})
 """
 import json, math, os, platform, re, sys, time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -9,6 +10,8 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "public")
 M = json.load(open(os.path.join(ROOT, "model.json")))
 MU, SD, W, B = M["mean"], M["std"], M["coef"], M["intercept"]
+_g = os.path.join(ROOT, "model_physionet.json")
+G = json.load(open(_g)) if os.path.exists(_g) else None  # AuraZ-R real-data trees (optional)
 
 def host():
     info = dict(arch=platform.machine(), python=platform.python_version(), machine=None, nnpa=False)
@@ -30,6 +33,16 @@ def score(x):
         z += W[i] * ((x[i] - MU[i]) / SD[i])
     return 1 / (1 + math.exp(-z))
 
+def score_gbm(x):
+    z = G["baseline"]
+    for t in G["trees"]:
+        i = 0
+        while not t["leaf"][i]:
+            xi = x[t["f"][i]]
+            i = t["l"][i] if (t["m"][i] if xi is None else xi <= t["t"][i]) else t["r"][i]
+        z += t["v"][i]
+    return 1 / (1 + math.exp(-z))
+
 class H(BaseHTTPRequestHandler):
     protocol_version = "HTTP/1.1"  # keep-alive: one TCP connection for many requests
     def _send(self, code, obj):
@@ -41,17 +54,20 @@ class H(BaseHTTPRequestHandler):
         self.end_headers(); self.wfile.write(body)
     def do_OPTIONS(self): self._send(204, {})
     def do_GET(self):
-        if self.path.startswith("/health"): self._send(200, dict(ok=True, features=len(W), **HOST))
+        if self.path.startswith("/health"):
+            self._send(200, dict(ok=True, features=len(W), real_model=(len(G["trees"]) if G else 0), real_features=(len(G["features"]) if G else 0), **HOST))
         else: self._send(404, {"error": "not found"})
     def do_POST(self):
-        if not self.path.startswith("/score"): return self._send(404, {"error": "not found"})
+        real = self.path.startswith("/score_real")
+        if not self.path.startswith("/score") or (real and not G): return self._send(404, {"error": "not found"})
+        width, fn = (len(G["features"]), score_gbm) if real else (len(W), score)
         try:
             batch = json.loads(self.rfile.read(int(self.headers.get("Content-Length", 0))))["batch"]
-            assert all(len(r) == len(W) for r in batch)
+            assert all(len(r) == width for r in batch)
         except Exception:
-            return self._send(400, {"error": f"expected {{batch: [[{len(W)} numbers], ...]}}"})
+            return self._send(400, {"error": f"expected {{batch: [[{width} numbers or null], ...]}}"})
         t = time.perf_counter_ns()
-        risk = [score(r) for r in batch]
+        risk = [fn(r) for r in batch]
         us = (time.perf_counter_ns() - t) / 1e3
         self._send(200, dict(risk=risk, compute_us=us, n=len(batch), **{k: HOST[k] for k in ("arch", "machine", "system", "nnpa")}))
     def log_message(self, *a): pass

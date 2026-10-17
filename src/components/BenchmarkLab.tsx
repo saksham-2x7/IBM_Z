@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Cpu, Cloud, RefreshCw, Info } from 'lucide-react';
 import { buildFeatures, Model, ReplayPatient, score } from '../lib/model';
 import { Health, remoteScore } from '../lib/remote';
+import { GbmModel, scoreGbm } from '../lib/gbm';
 
 interface Result { meanUs: number; p99Us: number; perSec: number; n: number }
 
@@ -13,6 +14,25 @@ export const BenchmarkLab: React.FC<BProps> = ({ model, patients, endpoint, setE
   const [rres, setRres] = useState<RemoteRes | null>(null);
   const [rbusy, setRbusy] = useState(false);
   const [rerr, setRerr] = useState('');
+  const [gres, setGres] = useState<{ rows: number; computeUsPerRow: number; maxRemoteVsLocal: number; maxLocalVsSklearn: number } | null>(null);
+  const [gbusy, setGbusy] = useState(false);
+  const runReal = async () => {
+    setGbusy(true); setRerr(''); setGres(null);
+    try {
+      const base = import.meta.env.BASE_URL;
+      const [gm, smp] = await Promise.all([fetch(`${base}model_physionet.json`).then((r) => r.json()) as Promise<GbmModel>,
+        fetch(`${base}physionet_samples.json`).then((r) => r.json()) as Promise<{ rows: (number | null)[][]; expected: number[] }>]);
+      let us = 0, dR = 0, dS = 0;
+      for (let k = 0; k < smp.rows.length; k += 25) {
+        const batch = smp.rows.slice(k, k + 25);
+        const r = await remoteScore(endpoint, batch, '/score_real');
+        us += r.compute_us;
+        batch.forEach((x, i) => { const loc = scoreGbm(gm, x); dR = Math.max(dR, Math.abs(r.risk[i] - loc)); dS = Math.max(dS, Math.abs(loc - smp.expected[k + i])); });
+      }
+      setGres({ rows: smp.rows.length, computeUsPerRow: us / smp.rows.length, maxRemoteVsLocal: dR, maxLocalVsSklearn: dS });
+    } catch { setRerr('Could not score the real-data model remotely. Is the latest ml/serve.py running with public/model_physionet.json next to it?'); }
+    setGbusy(false);
+  };
   const runRemote = async () => {
     setRbusy(true); setRerr(''); setRres(null);
     try {
@@ -74,7 +94,20 @@ export const BenchmarkLab: React.FC<BProps> = ({ model, patients, endpoint, setE
           <button onClick={() => setEndpoint(draft)} className="rounded-lg bg-cyan-500 px-4 py-2 text-sm font-semibold text-slate-950 hover:brightness-110">Connect</button>
           <button onClick={runRemote} disabled={!info || rbusy} className="rounded-lg border border-slate-600 px-4 py-2 text-sm text-slate-200 hover:bg-slate-800 disabled:opacity-40">{rbusy ? 'Measuring…' : 'Benchmark remote (40 requests)'}</button>
         </div>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <button onClick={runReal} disabled={!info?.real_model || gbusy} className="rounded-lg border border-emerald-700 px-4 py-2 text-sm text-emerald-300 hover:bg-emerald-950/40 disabled:opacity-40">
+            {gbusy ? 'Scoring real-data trees…' : `Run AuraZ-R real-data trees on this host${info?.real_model ? ` (${info.real_model} trees)` : ''}`}
+          </button>
+        </div>
         {rerr && <div className="mt-3 text-sm text-amber-400">{rerr}</div>}
+        {gres && (
+          <div className="mt-4 grid grid-cols-2 gap-3 text-center font-mono md:grid-cols-4">
+            {[['Real held-out rows', gres.rows.toString()], ['Server compute / row', `${gres.computeUsPerRow.toFixed(0)} µs`],
+              ['Max |remote − browser|', gres.maxRemoteVsLocal.toExponential(1)], ['Max |browser − sklearn|', gres.maxLocalVsSklearn.toExponential(1)]].map(([k, v]) => (
+              <div key={k} className="rounded-xl bg-slate-950 p-3"><div className="text-[11px] text-slate-500">{k}</div><div className="text-xl font-bold text-emerald-400">{v}</div></div>
+            ))}
+          </div>
+        )}
         {rres && (
           <div className="mt-4 text-xs text-slate-400">The round trip is dominated by the distance to the data centre. The model itself runs in microseconds on the mainframe; that gap is the case for scoring beside the data.</div>
         )}

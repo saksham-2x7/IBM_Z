@@ -126,12 +126,16 @@ def main():
         if yte[m].min() != yte[m].max(): aucs.append(roc_auc_score(yte[m], pte_lr[m]))
     fpr, tpr, _ = roc_curve(yte, pte_lr); k = np.linspace(0, len(fpr) - 1, 60).astype(int)
 
-    # conformal (split) on calibration table, alpha = 0.10
+    # class-conditional (Mondrian) split conformal, alpha = 0.10: a separate 90% guarantee for septic and
+    # non-septic hours. Plain marginal conformal is dominated by the ~98% negative hours and returns empty
+    # sets for most risks, so it is not informative at this prevalence.
     pca = lr.predict_proba(Z(Xca))[:, 1]; alpha = .10
-    qhat = conf_qhat(np.where(yca == 1, pca, 1 - pca), alpha)
-    in_set = lambda p, y: (1 - (p if y == 1 else 1 - p)) <= qhat
-    cover = np.mean([in_set(p, y) for p, y in zip(pte_lr, yte)])
-    amb = np.mean([((1 - p) <= qhat) and (p <= qhat) for p in pte_lr])
+    q_pos = conf_qhat(pca[yca == 1], alpha)        # include "sepsis" if 1 - p <= q_pos
+    q_neg = conf_qhat(1 - pca[yca == 0], alpha)    # include "not-at-risk" if p <= q_neg
+    has_pos, has_neg = (1 - pte_lr) <= q_pos, pte_lr <= q_neg
+    cover_pos, cover_neg = float(has_pos[yte == 1].mean()), float(has_neg[yte == 0].mean())
+    cover = float(np.where(yte == 1, has_pos, has_neg).mean())
+    amb = float((has_pos == has_neg).mean())       # both labels plausible, or neither: "uncertain"
 
     # alert threshold chosen on calibration cohort under a false-alert budget
     score = lambda p, h: float(lr.predict_proba(Z(np.array([feat(p["v"], h)])))[0, 1])
@@ -153,7 +157,7 @@ def main():
     # SHAP-exact attribution for LR = coef * z ; mean |contribution| global importance
     imp = np.abs(Z(Xte) * lr.coef_[0]).mean(0)
     json.dump(dict(features=FEATS, mean=mu.tolist(), std=sd.tolist(), coef=lr.coef_[0].tolist(),
-                   intercept=float(lr.intercept_[0]), qhat=qhat, alpha=alpha, alert_threshold=thr),
+                   intercept=float(lr.intercept_[0]), qhat_pos=q_pos, qhat_neg=q_neg, alpha=alpha, alert_threshold=thr),
               open(f"{OUT}/model.json", "w"))
     metrics = dict(
         data=DATA_LABEL,
@@ -162,7 +166,9 @@ def main():
         auroc=float(roc_auc_score(yte, pte_lr)), auroc_ci95=[float(np.percentile(aucs, 2.5)), float(np.percentile(aucs, 97.5))],
         auprc=float(average_precision_score(yte, pte_lr)), prevalence=float(yte.mean()),
         auroc_gbm_comparison=float(roc_auc_score(yte, pte_gb)),
-        conformal=dict(alpha=alpha, target_coverage=1 - alpha, empirical_coverage=float(cover), uncertain_fraction=float(amb)),
+        conformal=dict(method="class-conditional split conformal", alpha=alpha, target_coverage=1 - alpha, empirical_coverage=cover,
+                       coverage_septic_hours=cover_pos, coverage_nonseptic_hours=cover_neg, uncertain_fraction=amb,
+                       qhat_pos=q_pos, qhat_neg=q_neg),
         alerting=dict(threshold=thr, false_alert_budget_per_100_patient_days=BUDGET, model=ours, baseline_sirs_rule=base),
         lead_time_hist=np.histogram(leads, bins=range(0, 12))[0].tolist(),
         roc=dict(fpr=fpr[k].round(4).tolist(), tpr=tpr[k].round(4).tolist()),

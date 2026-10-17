@@ -1,18 +1,22 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Check, Copy } from 'lucide-react';
-import { Metrics } from '../lib/model';
+import { Metrics, RealMetrics } from '../lib/model';
 
 const pct = (v: number) => `${Math.round(v * 100)}%`;
 
 export const SubmissionHub: React.FC<{ m: Metrics }> = ({ m }) => {
   const [copied, setCopied] = useState('');
+  const [real, setReal] = useState<RealMetrics | null>(null);
+  useEffect(() => { fetch(`${import.meta.env.BASE_URL}metrics_physionet.json`).then((r) => r.json()).then(setReal).catch(() => setReal(null)); }, []);
   const a = m.alerting, ours = a.model, sirs = a.baseline_sirs_rule;
   const fields: [string, string][] = [
     ['Title', 'AuraZ: explainable, calibrated ICU sepsis early warning that runs beside the data on IBM Z'],
     ['Problem', 'Sepsis kills about 11 million people a year, and every hour of delayed treatment raises mortality. ICU early-warning rules such as SIRS fire constantly, so clinicians learn to ignore them, while cloud-hosted AI moves protected health data off-site and adds network latency to a time-critical decision.'],
     ['Solution', `AuraZ scores each ICU patient every hour and predicts sepsis onset in the next 6 hours. Every alert carries a per-feature explanation and a conformal-prediction uncertainty set with a ${pct(m.conformal.target_coverage)} coverage guarantee. On a held-out simulated cohort of ${m.cohorts.test.toLocaleString()} stays, AuraZ caught ${pct(ours.sensitivity)} of septic patients early versus ${pct(sirs.sensitivity)} for the SIRS rule, with ${ours.false_alerts_per_100_patient_days.toFixed(1)} versus ${sirs.false_alerts_per_100_patient_days.toFixed(1)} false alerts per 100 patient-days (AUROC ${m.auroc.toFixed(3)}, 95% CI ${m.auroc_ci95[0].toFixed(3)}–${m.auroc_ci95[1].toFixed(3)}).`],
-    ['Why IBM Z', 'Hospital vitals already flow through transactional systems. AuraZ ships as a dependency-free inference service that runs on IBM LinuxONE (s390x), so scoring happens next to the data with no PHI egress and no internet round trip. The demo scores a 200-bed ward in one batch on the mainframe and verifies the result matches the reference model exactly. Next step: compile the model for the Telum II on-chip accelerator (NNPA) with the IBM Z Deep Learning Compiler.'],
-    ['Honesty statement', 'Results use a clinically parameterised simulated cohort with confounders and sparse labs. The same pipeline is built to retrain on PhysioNet 2019 and MIMIC-IV. Latency figures in the app are measured live, not quoted.'],
+    ['Why IBM Z', 'Hospital vitals already flow through transactional systems. AuraZ ships as a dependency-free inference service that runs on IBM LinuxONE (s390x), so scoring happens next to the data with no PHI egress and no internet round trip. The demo scores a 200-bed ward in one batch on the mainframe and verifies the result matches the reference model exactly. Inference currently runs on the CPU; compiling the model for the Telum II on-chip accelerator (NNPA) with the IBM Z Deep Learning Compiler is the next step.'],
+    ['Real-data evidence', real
+      ? `The headline cards use a simulated cohort and demonstrate the method. On real ICU data (PhysioNet 2019, ${(real.cohorts.train + real.cohorts.calibration + real.cohorts.test).toLocaleString()} stays, patient-level held-out test of ${real.cohorts.test} stays) our real-data model AuraZ-R, gradient-boosted trees over all 34 clinical variables plus measurement recency, reaches AUROC ${real.auroc.toFixed(2)} (95% CI ${real.auroc_ci95[0].toFixed(2)}–${real.auroc_ci95[1].toFixed(2)}); ${real.ablations.without_icu_time.toFixed(2)} without ICU-time features; up from ${real.baselines.logistic_16_features.toFixed(2)} for our first 16-feature model. At the same false-alarm rate as the SIRS rule it catches ${pct(real.alerting.model_at_sirs_false_alert_rate?.sensitivity ?? 0)} of septic patients early versus ${pct(real.alerting.baseline_sirs_rule.sensitivity)}. Its uncertainty guarantee holds on real data (${pct(real.conformal.coverage_septic_hours)} / ${pct(real.conformal.coverage_nonseptic_hours)} coverage, target 90%). The trees run on the z17 with no dependencies; inference uses the CPU, not yet the NNPA accelerator. Research prototype, not a medical device.`
+      : 'Headline results use a simulated cohort and demonstrate the method only. Not a medical device.'],
     ['Future scope', 'Retrain and externally validate on PhysioNet 2019 / MIMIC-IV / eICU, subgroup fairness audit, NNPA acceleration benchmarks, HL7/FHIR integration and a prospective silent-mode pilot.'],
   ];
   const copy = (k: string, t: string) => { navigator.clipboard?.writeText(t).catch(() => {}); setCopied(k); setTimeout(() => setCopied(''), 1500); };

@@ -1,4 +1,4 @@
-export interface Health { ok: boolean; arch: string; machine: string | null; system: string; nnpa: boolean; python: string }
+export interface Health { ok: boolean; arch: string; machine: string | null; system: string; nnpa: boolean; python: string; real_model?: number; real_features?: number }
 export interface ScoreResp { risk: number[]; compute_us: number; n: number; arch: string; machine: string | null; system: string; nnpa: boolean }
 
 const clean = (u: string) => u.trim().replace(/\/+$/, '');
@@ -9,8 +9,8 @@ export async function health(endpoint: string): Promise<Health> {
   return r.json();
 }
 
-export async function remoteScore(endpoint: string, batch: number[][]): Promise<ScoreResp> {
-  const r = await fetch(`${clean(endpoint)}/score`, {
+export async function remoteScore(endpoint: string, batch: (number | null)[][], path: '/score' | '/score_real' = '/score'): Promise<ScoreResp> {
+  const r = await fetch(`${clean(endpoint)}${path}`, {
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ batch }), signal: AbortSignal.timeout(8000),
   });
   if (!r.ok) throw new Error(`HTTP ${r.status}`);
