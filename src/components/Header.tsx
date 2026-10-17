@@ -1,8 +1,8 @@
 import React from 'react';
 import { Activity } from 'lucide-react';
 
-export type Tab = 'replay' | 'validation' | 'ibmz' | 'architecture' | 'submission';
-const TABS: [Tab, string][] = [['replay', 'Live Replay'], ['validation', 'Validation'], ['ibmz', 'IBM Z'], ['architecture', 'Architecture'], ['submission', 'Submission']];
+export type Tab = 'replay' | 'ward' | 'validation' | 'ibmz' | 'architecture' | 'submission';
+const TABS: [Tab, string][] = [['replay', 'Live Replay'], ['ward', 'Ward'], ['validation', 'Validation'], ['ibmz', 'IBM Z'], ['architecture', 'Architecture'], ['submission', 'Submission']];
 
 interface Props { activeTab: Tab; setActiveTab: (t: Tab) => void; ibmz: { connected: boolean; label: string } }
 

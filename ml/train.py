@@ -11,7 +11,9 @@ from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.metrics import roc_auc_score, average_precision_score, roc_curve
 
 rng = np.random.default_rng(2026)
-OUT = os.path.join(os.path.dirname(__file__), "..", "public")
+OUT = os.environ.get("AURAZ_OUT", os.path.join(os.path.dirname(__file__), "..", "public"))
+cohort_override = None  # (train, calibration, test) lists of patients; set by ml/train_physionet.py
+DATA_LABEL = "Simulated ICU cohort (clinically parameterised; confounders + sparse labs). Not real patients."
 H = 48
 CH = ["hr", "map", "sbp", "rr", "temp", "spo2", "lactate", "wbc"]
 
@@ -105,9 +107,9 @@ def conf_qhat(p_true_cal, alpha):
     n = len(p_true_cal); s = 1 - p_true_cal
     return float(np.quantile(s, min(1, np.ceil((n + 1) * (1 - alpha)) / n), method="higher"))
 
-if __name__ == "__main__":
+def main():
     t0 = time.time()
-    tr, cal, te = cohort(5000), cohort(1500), cohort(3000)
+    tr, cal, te = cohort_override or (cohort(5000), cohort(1500), cohort(3000))
     Xtr, ytr, _, _ = table(tr); Xca, yca, _, _ = table(cal); Xte, yte, pte, hte = table(te)
     mu, sd = Xtr.mean(0), Xtr.std(0) + 1e-9
     Z = lambda X: (X - mu) / sd
@@ -152,7 +154,7 @@ if __name__ == "__main__":
                    intercept=float(lr.intercept_[0]), qhat=qhat, alpha=alpha, alert_threshold=thr),
               open(f"{OUT}/model.json", "w"))
     metrics = dict(
-        data="Simulated ICU cohort (clinically parameterised; confounders + sparse labs). Not real patients.",
+        data=DATA_LABEL,
         cohorts=dict(train=len(tr), calibration=len(cal), test=len(te), test_septic=sum(p["onset"] is not None for p in te)),
         task="Predict Sepsis-3 onset within the next 6 h, scored hourly",
         auroc=float(roc_auc_score(yte, pte_lr)), auroc_ci95=[float(np.percentile(aucs, 2.5)), float(np.percentile(aucs, 97.5))],
@@ -170,7 +172,16 @@ if __name__ == "__main__":
     pick = []
     for want, n in (("sepsis", 4), ("none", 2), ("postop", 1), ("hypovol", 1)):
         pick += [p for p in te if p["kind"] == want][:n]
+    pick = pick or te[:8]
     json.dump([dict(id=f"TEST-{i+1:02d}", kind=p["kind"], onset=p["onset"],
                     vitals={c: np.round(p["v"][c], 2).tolist() for c in CH}) for i, p in enumerate(pick)],
               open(f"{OUT}/replay.json", "w"))
+    # ward: 200 held-out stays for the multi-bed view (patients 100..299 of the test cohort)
+    ward = te[100:300]
+    json.dump([dict(id=f"BED-{i+1:03d}", onset=p["onset"], kind=p["kind"],
+                    vitals={c: np.round(p["v"][c], 1).tolist() for c in CH}) for i, p in enumerate(ward)],
+              open(f"{OUT}/ward.json", "w"), separators=(",", ":"))
     print(json.dumps({k: metrics[k] for k in ("auroc", "auroc_ci95", "auroc_gbm_comparison", "conformal", "alerting")}, indent=1))
+
+if __name__ == "__main__":
+    main()

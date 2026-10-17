@@ -13,7 +13,8 @@ AuraZ scores ICU vitals every hour and warns clinicians hours before sepsis onse
 | Data | **Simulated** ICU cohort (confounders, sparse labs, atypical presentations). Pipeline retrains unchanged on PhysioNet 2019 / MIMIC-IV once downloaded — numbers will differ |
 | Latency Lab | **Measured** on the viewer's CPU. Cloud path is a labelled, adjustable assumption |
 | IBM Z Telum II hardware numbers | **Not yet measured.** Next milestone: LinuxONE Community Cloud + ONNX / zDLC |
-| Fleet Mockup / Intervention Sandbox | Illustrative, hand-authored demo data |
+| IBM LinuxONE inference service (`ml/serve.py`) | **Real.** Standard-library Python, runs on s390x with nothing to install; the app's Live Replay and 200-bed Ward score on it once connected, and the IBM Z tab verifies remote = local results |
+| PhysioNet 2019 retraining (`ml/train_physionet.py`) | **Ready, not yet run on real data.** Tested end-to-end on files in the PhysioNet format; needs the open-access download |
 
 ## Held-out results (simulated cohort, 3,000 test stays)
 
@@ -32,11 +33,20 @@ Sepsis scoring is a streaming, latency-sensitive, privacy-bound workload: exactl
 ## Run
 
 ```bash
-python3 ml/train.py     # regenerates public/model.json, metrics.json, replay.json
-npm install && npm run dev   # http://localhost:5174
+python3 ml/train.py            # simulated cohort -> public/*.json
+python3 ml/train_physionet.py  # real data (after downloading PhysioNet 2019 into data/physionet2019/)
+npm install && npm run dev     # http://localhost:5174
 ```
 
-Tabs: **Live Model Replay** · **Validation** · **Latency Lab** · Fleet Mockup · Intervention Sandbox · IBM Z Architecture · Submission.
+**On IBM LinuxONE** (copy `ml/` and `public/` to the VM, nothing to install):
+
+```bash
+python3 ml/serve.py 8080
+```
+
+Then open the **IBM Z** tab, enter `http://<VM-IP>:8080`, and press Connect. Live Replay and Ward now score on the mainframe.
+
+Tabs: **Live Replay** · **Ward** (200 beds) · **Validation** · **IBM Z** · Architecture · Submission.
 
 ## Roadmap
 1. Retrain on PhysioNet 2019 (open access) and report real-data metrics.
