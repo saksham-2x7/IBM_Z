@@ -34,18 +34,16 @@ def load(path):
         v[dst] = x
     lab = [int(r[col["SepsisLabel"]]) for r in data]
     # Challenge labels are shifted 6 h early; Sepsis-3 onset = first positive label + 6
-    onset = lab.index(1) + 6 if 1 in lab else None
+    onset = lab.index(1) + 6 if 1 in lab else None  # may exceed the record length
     meta = dict(age=float(data[0][col["Age"]]), sex=int(float(data[0][col["Gender"]])))
-    return dict(v=v, onset=onset if onset is None or onset < len(data) else None, kind="sepsis" if onset is not None else "none", **meta)
+    return dict(v=v, onset=onset, kind="sepsis" if onset is not None else "none", **meta)
 
 if __name__ == "__main__":
     files = sorted(glob.glob(os.path.join(SRC, "**", "*.psv"), recursive=True))
     if not files:
         sys.exit(f"No .psv files under {SRC}. Download the PhysioNet 2019 training sets first (see docstring).")
     P = [p for p in (load(f) for f in files) if p is not None]
-    # Truncate to the 48 h window ml/train.py works with (H)
-    P = [dict(p, v={k: a[:T.H] for k, a in p["v"].items()}) for p in P if len(p["v"]["hr"]) >= T.H or p["onset"] is not None]
-    P = [p for p in P if len(p["v"]["hr"]) == T.H and (p["onset"] is None or 6 < p["onset"] < T.H)]
+    P = [p for p in P if len(p['v']['hr']) >= 12]
     rng = np.random.default_rng(2026); rng.shuffle(P)
     n = len(P); print(f"{n} usable stays, {sum(p['onset'] is not None for p in P)} septic")
     T.cohort_override = (P[: int(.6 * n)], P[int(.6 * n): int(.8 * n)], P[int(.8 * n):])
