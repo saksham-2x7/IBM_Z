@@ -1,13 +1,13 @@
-# AuraZ — Hack2Skill abstract (≈250 words)
+# AuraZ — Hack2Skill abstract (about 250 words)
 
 **Title:** AuraZ: explainable, calibrated ICU sepsis early warning that runs beside the data on IBM Z
 
-**Problem.** Sepsis causes an estimated 11 million deaths a year (WHO, 2017 estimates), and guidelines ask for antimicrobials within an hour of recognising probable sepsis or shock. Rule-based ICU screens such as SIRS fire constantly, so clinicians tune them out, while cloud-hosted AI moves protected health data off-site.
+**Problem.** Sepsis causes an estimated 11 million deaths a year (WHO), and guidelines ask for antimicrobials within an hour of recognising probable sepsis or shock. Rule-based ICU screens such as SIRS fire constantly, so clinicians tune them out, and cloud AI moves protected health data off-site.
 
-**Solution.** AuraZ scores every ICU patient hourly and predicts sepsis onset in the next 6 hours. Each alert comes with a plain-language explanation (exact per-feature contributions) and a class-conditional conformal uncertainty label (90% target per class) that says "uncertain" when the model cannot decide. On a held-out simulated cohort (3,000 stays) it caught 75% of septic patients early versus 48% for SIRS, with 11.7 versus 47.3 false alerts per 100 patient-days.
+**Solution.** AuraZ scores every ICU patient hourly and predicts sepsis onset in the next 6 hours. Each alert carries a plain-language explanation and a conformal uncertainty label (90% coverage per class) that says "uncertain" when the model cannot decide.
 
-**Honest real-data test.** Retrained on 4,989 real PhysioNet 2019 stays, discrimination is weak (AUROC 0.61, 95% CI 0.56–0.65). The simulated results do not transfer, but calibration does: the uncertainty guarantee holds and the model labels most hours "uncertain" instead of overclaiming.
+**Real ICU data.** Our first model did not transfer to real data (AUROC 0.61), so we built AuraZ-R: gradient-boosted trees over all 34 clinical variables plus measurement recency. On 998 held-out PhysioNet 2019 stays it reaches AUROC 0.775 (95% CI 0.72–0.82; 0.73 without ICU-time features). At SIRS's alarm rate it catches 94% of septic patients early versus 88%, and the uncertainty guarantee still holds. A simulated cohort with look-alike patients demonstrates the full workflow.
 
-**Why IBM Z.** A dependency-free inference service runs on IBM LinuxONE. We verified it on a real IBM z17 (machine 9175, Telum II, NNPA flag present): remote scores match the reference model exactly, about 12 µs of compute per request, and a 200-bed ward scores in one batch. Inference currently uses the CPU.
+**Why IBM Z.** A dependency-free inference service runs on IBM LinuxONE. On a real IBM z17 (machine 9175, Telum II, NNPA flag present) both models ran and matched our reference scores exactly. A 200-bed ward scores in one batch, and the real-data trees take about 225 µs per patient-hour, on the CPU.
 
-**Next.** Gradient boosting (AUROC 0.68 on real data) compiled for the Telum II accelerator via ONNX and the IBM Z Deep Learning Compiler, the full 40k-stay dataset, and a silent-mode pilot.
+**Next.** Compile the trees for the Telum II accelerator (ONNX + IBM Z Deep Learning Compiler), train on all 40k stays with external validation, and run a silent-mode clinical pilot.

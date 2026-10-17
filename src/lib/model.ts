@@ -48,6 +48,16 @@ export interface Metrics {
   feature_importance: [string, number][];
 }
 
+export interface RealMetrics {
+  data: string; model: string; n_features: number;
+  cohorts: Metrics['cohorts']; auroc: number; auroc_ci95: [number, number]; auprc: number; prevalence: number;
+  baselines: { logistic_16_features: number; logistic_same_rich_features: number };
+  ablations: { without_icu_time: number; without_icu_time_and_recency: number };
+  conformal: Metrics['conformal'];
+  alerting: Metrics['alerting'] & { model_at_sirs_false_alert_rate: (AlertStats & { threshold: number }) | null };
+  top_features_by_gain: [string, number][];
+}
+
 export interface AlertStats {
   sensitivity: number;
   median_lead_h: number;

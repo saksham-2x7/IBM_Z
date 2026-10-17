@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
+import { scoreGbm, type GbmModel } from '../src/lib/gbm';
 import { buildFeatures, conformalSet, contributions, score, type Metrics, type Model, type ReplayPatient } from '../src/lib/model';
 
 const load = <T,>(f: string): T => JSON.parse(readFileSync(new URL(`../public/${f}`, import.meta.url), 'utf8'));
@@ -93,5 +94,25 @@ describe('public/metrics.json consistency', () => {
 describe('data hygiene', () => {
   it('replay patients have equal-length vitals channels', () => {
     for (const p of replay) { const n = p.vitals.hr.length; for (const ch of Object.values(p.vitals)) expect(ch).toHaveLength(n); }
+  });
+});
+
+describe('AuraZ-R real-data trees (src/lib/gbm.ts)', () => {
+  const gm = load<GbmModel>('model_physionet.json');
+  const smp = load<{ features: string[]; rows: (number | null)[][]; expected: number[] }>('physionet_samples.json');
+  const real = load<{ auroc: number; auroc_ci95: [number, number]; n_features: number; conformal: Metrics['conformal'] }>('metrics_physionet.json');
+  it('scores 300 real held-out rows exactly like sklearn (incl. missing values)', () => {
+    expect(smp.rows.some((r) => r.includes(null))).toBe(true);
+    smp.rows.forEach((x, i) => expect(scoreGbm(gm, x)).toBeCloseTo(smp.expected[i], 12));
+  });
+  it('feature lists agree between model, samples and metrics', () => {
+    expect(gm.features).toEqual(smp.features);
+    expect(gm.features).toHaveLength(real.n_features);
+  });
+  it('real-data AUROC lies inside its CI and conformal coverage is near target for both classes', () => {
+    expect(real.auroc).toBeGreaterThanOrEqual(real.auroc_ci95[0]);
+    expect(real.auroc).toBeLessThanOrEqual(real.auroc_ci95[1]);
+    expect(Math.abs(real.conformal.coverage_septic_hours - 0.9)).toBeLessThan(0.03);
+    expect(Math.abs(real.conformal.coverage_nonseptic_hours - 0.9)).toBeLessThan(0.03);
   });
 });
