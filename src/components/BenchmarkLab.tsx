@@ -19,7 +19,7 @@ export const BenchmarkLab: React.FC<BProps> = ({ model, patients, endpoint, setE
       const xs: number[][] = [];
       for (const p of patients) for (let h = 6; h < 48; h++) xs.push(buildFeatures(p.vitals, h));
       const rtt: number[] = [], comp: number[] = []; let maxDiff = 0;
-      for (let i = 0; i < 300; i++) {
+      for (let i = 0; i < 40; i++) {
         const x = xs[i % xs.length]; const t = performance.now();
         const r = await remoteScore(endpoint, [x]);
         rtt.push(performance.now() - t); comp.push(r.compute_us);
@@ -72,12 +72,15 @@ export const BenchmarkLab: React.FC<BProps> = ({ model, patients, endpoint, setE
         <div className="mt-4 flex flex-wrap gap-2">
           <input value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="http://<LinuxONE-VM-IP>:8080" className="min-w-[260px] flex-1 rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 font-mono text-sm text-slate-100" />
           <button onClick={() => setEndpoint(draft)} className="rounded-lg bg-cyan-500 px-4 py-2 text-sm font-semibold text-slate-950 hover:brightness-110">Connect</button>
-          <button onClick={runRemote} disabled={!info || rbusy} className="rounded-lg border border-slate-600 px-4 py-2 text-sm text-slate-200 hover:bg-slate-800 disabled:opacity-40">{rbusy ? 'Measuring…' : 'Benchmark remote (300 requests)'}</button>
+          <button onClick={runRemote} disabled={!info || rbusy} className="rounded-lg border border-slate-600 px-4 py-2 text-sm text-slate-200 hover:bg-slate-800 disabled:opacity-40">{rbusy ? 'Measuring…' : 'Benchmark remote (40 requests)'}</button>
         </div>
         {rerr && <div className="mt-3 text-sm text-amber-400">{rerr}</div>}
         {rres && (
+          <div className="mt-4 text-xs text-slate-400">The round trip is dominated by the distance to the data centre. The model itself runs in microseconds on the mainframe; that gap is the case for scoring beside the data.</div>
+        )}
+        {rres && (
           <div className="mt-4 grid grid-cols-2 gap-3 text-center font-mono md:grid-cols-4">
-            {[['Round trip P50', `${rres.rttP50.toFixed(1)} ms`], ['Round trip P99', `${rres.rttP99.toFixed(1)} ms`], ['Server compute P50', `${rres.computeP50.toFixed(1)} µs`], ['Max |remote − local|', rres.maxDiff.toExponential(1)]].map(([k, v]) => (
+            {[['Round trip P50 (incl. network)', `${rres.rttP50.toFixed(1)} ms`], ['Round trip P99 (incl. network)', `${rres.rttP99.toFixed(1)} ms`], ['Server compute P50', `${rres.computeP50.toFixed(1)} µs`], ['Max |remote − local|', rres.maxDiff.toExponential(1)]].map(([k, v]) => (
               <div key={k} className="rounded-xl bg-slate-950 p-3"><div className="text-[11px] text-slate-500">{k}</div><div className="text-xl font-bold text-emerald-400">{v}</div></div>
             ))}
           </div>

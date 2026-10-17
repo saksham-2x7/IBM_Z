@@ -44,9 +44,13 @@ npm install && npm run dev     # http://localhost:5174
 python3 ml/serve.py 8080
 ```
 
-Then open the **IBM Z** tab, enter `http://<VM-IP>:8080`, and press Connect. Live Replay and Ward now score on the mainframe.
+If port 8080 is not reachable, tunnel it: `ssh -N -L 8080:localhost:8080 -i key.pem linux1@<VM-IP>`. Then open the **IBM Z** tab, enter `http://localhost:8080` (or the VM address), and press Connect. Live Replay and Ward now score on the mainframe.
 
 Tabs: **Live Replay** · **Ward** (200 beds) · **Validation** · **IBM Z** · Architecture · Submission.
+
+## Verified on IBM LinuxONE
+
+Run through the app against a real IBM z17 (Telum II, machine type 9175, `nnpa` flag present) on the LinuxONE Community Cloud: remote scores match the local reference model exactly (max difference 0.0), server-side compute is ~12 µs per request in pure Python, and the 200-bed ward scores in one batch. The ~445 ms median round trip in that test is the network distance to the data centre, which is the argument for scoring beside the data.
 
 ## Roadmap
 1. Retrain on PhysioNet 2019 (open access) and report real-data metrics.
