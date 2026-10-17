@@ -16,10 +16,15 @@
  "prevalence": 0.018000453792952762,
  "auroc_gbm_comparison": 0.8149706270481892,
  "conformal": {
+  "method": "class-conditional split conformal",
   "alpha": 0.1,
   "target_coverage": 0.9,
-  "empirical_coverage": 0.8983419750077734,
-  "uncertain_fraction": 0.0
+  "empirical_coverage": 0.8961234316831517,
+  "coverage_septic_hours": 0.9243697478991597,
+  "coverage_nonseptic_hours": 0.8956056651405588,
+  "uncertain_fraction": 0.5197778095246098,
+  "qhat_pos": 0.9952567049244071,
+  "qhat_neg": 0.03873621371146874
  },
  "alerting": {
   "threshold": 0.17499999999999927,
@@ -242,5 +247,5 @@
    0.0181
   ]
  ],
- "runtime_s": 21.0
+ "runtime_s": 21.4
 }

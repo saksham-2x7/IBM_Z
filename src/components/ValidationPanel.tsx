@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Metrics } from '../lib/model';
 
 const pct = (v: number, d = 0) => `${(v * 100).toFixed(d)}%`;
 
 export const ValidationPanel: React.FC<{ m: Metrics }> = ({ m }) => {
+  const [real, setReal] = useState<Metrics | null>(null);
+  useEffect(() => { fetch(`${import.meta.env.BASE_URL}metrics_physionet.json`).then((r) => r.json()).then(setReal).catch(() => setReal(null)); }, []);
   const a = m.alerting, W = 300, H = 220;
   const roc = m.roc.fpr.map((f, i) => `${30 + f * (W - 40)},${H - 24 - m.roc.tpr[i] * (H - 40)}`).join(' ');
   const hist = m.lead_time_hist, hmax = Math.max(...hist, 1);
@@ -16,12 +18,32 @@ export const ValidationPanel: React.FC<{ m: Metrics }> = ({ m }) => {
   return (
     <div className="space-y-5 p-4 md:p-6 max-w-7xl mx-auto">
       <div className="rounded-2xl border border-amber-700/40 bg-amber-950/20 p-4 text-sm text-amber-200">
-        <b>Transparency:</b> {m.data} Results are from a patient-level held-out test cohort of {m.cohorts.test.toLocaleString()} simulated stays ({m.cohorts.test_septic} septic). The identical pipeline is built to retrain on PhysioNet 2019 / MIMIC-IV; those numbers will differ.
-      </div>
+        <b>Transparency:</b> {m.data} The cards below are a <b>method demonstration</b> on a patient-level held-out test cohort of {m.cohorts.test.toLocaleString()} simulated stays ({m.cohorts.test_septic} septic). Real-data results from the same pipeline are in the PhysioNet panel just below.</div>
+      {real && (
+        <div className="rounded-2xl border border-slate-700 bg-slate-900/60 p-5">
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <h3 className="font-semibold text-white">Real ICU data: PhysioNet 2019 sample</h3>
+            <span className="text-xs text-slate-400">{real.cohorts.test.toLocaleString()} held-out stays · {real.cohorts.test_septic} septic · same pipeline, retrained</span>
+          </div>
+          <div className="mt-3 grid gap-3 font-mono sm:grid-cols-4">
+            {[['AUROC (deployed)', real.auroc.toFixed(3), `95% CI ${real.auroc_ci95[0].toFixed(2)}–${real.auroc_ci95[1].toFixed(2)}`],
+              ['Gradient boosting', real.auroc_gbm_comparison.toFixed(3), 'not deployed yet'],
+              ['Conformal coverage', `${pct(real.conformal.coverage_septic_hours, 1)} · ${pct(real.conformal.coverage_nonseptic_hours, 1)}`, 'septic · non-septic, target 90%'],
+              ['Says "uncertain"', pct(real.conformal.uncertain_fraction), 'of hours: the model admits it cannot decide']].map(([t, val, s]) => (
+              <div key={t} className="rounded-xl bg-slate-950 p-3"><div className="text-[11px] text-slate-500">{t}</div><div className="text-xl font-bold text-slate-100">{val}</div><div className="text-[11px] text-slate-500">{s}</div></div>
+            ))}
+          </div>
+          <p className="mt-3 text-sm text-slate-300">
+            On real data the model is weak: at about {real.alerting.model.false_alerts_per_100_patient_days.toFixed(0)} false alerts per 100 patient-days it catches {pct(real.alerting.model.sensitivity)} of septic patients
+            (SIRS: {pct(real.alerting.baseline_sirs_rule.sensitivity)}, but {real.alerting.baseline_sirs_rule.false_alerts_per_100_patient_days.toFixed(0)} false alerts). The simulated results above do not transfer.
+            What does transfer is the calibration: the uncertainty guarantee still holds, and the model flags most hours as uncertain instead of overclaiming.
+          </p>
+        </div>
+      )}
       <div className="grid gap-5 md:grid-cols-4">
         {[['AUROC', m.auroc.toFixed(3), `95% CI ${m.auroc_ci95[0].toFixed(3)}–${m.auroc_ci95[1].toFixed(3)}`],
           ['AUPRC', m.auprc.toFixed(3), `prevalence ${pct(m.prevalence, 1)}`],
-          ['Conformal coverage', pct(m.conformal.empirical_coverage, 1), `target ${pct(m.conformal.target_coverage)} — matches the guarantee`],
+          ['Conformal coverage', `${pct(m.conformal.coverage_septic_hours, 1)} · ${pct(m.conformal.coverage_nonseptic_hours, 1)}`, `septic · non-septic hours, each targeting ${pct(m.conformal.target_coverage)} (class-conditional)`],
           ['Interpretable vs GBM', m.auroc.toFixed(3), `gradient-boosting: ${m.auroc_gbm_comparison.toFixed(3)} (no accuracy cost)`]].map(([t, v, s]) => (
           <div key={t} className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5 font-mono"><div className="text-xs text-slate-400">{t}</div><div className="mt-1 text-3xl font-extrabold text-cyan-300">{v}</div><div className="mt-1 text-[11px] text-slate-500">{s}</div></div>
         ))}
