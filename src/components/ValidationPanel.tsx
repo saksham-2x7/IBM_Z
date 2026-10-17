@@ -46,7 +46,7 @@ export const ValidationPanel: React.FC<{ m: Metrics }> = ({ m }) => {
           <p className="mt-3 text-sm text-slate-300">
             The simulated numbers above do not carry over one-to-one, so for real data we built AuraZ-R: all 34 clinical variables, how recently each was measured, trends and demographics.
             It reaches AUROC {real.auroc.toFixed(2)} on real held-out patients (still {real.ablations.without_icu_time.toFixed(2)} without ICU-time features) and keeps its uncertainty guarantee.
-            It is a 4,989-stay sample with {real.cohorts.test_septic} septic test stays, so the confidence interval is wide; this is research evidence, not clinical validation.
+            It was trained on {(real.cohorts.train + real.cohorts.calibration + real.cohorts.test).toLocaleString()} real stays and tested on {real.cohorts.test_septic} septic test stays; across hospitals it drops (see below), so treat this as research evidence, not clinical validation.
           </p>
         </div>
       )}

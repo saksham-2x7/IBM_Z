@@ -9,7 +9,7 @@ Retrospective research on hourly ICU sepsis early warning, and a demonstration o
 | Model | Data | Method | Use |
 |---|---|---|---|
 | Demo model | Simulated ICU cohort (5,000 / 1,500 / 3,000 stays) | Logistic regression, 16 features, exact explanations | Demonstrates the pipeline, conformal labels, alert budget and IBM Z serving |
-| **AuraZ-R** | PhysioNet/CinC 2019 real ICU data (4,989 stays) | 300 gradient-boosted trees, 108 features (all 34 clinical variables, measurement recency, trends, demographics) | Real-data performance claims |
+| **AuraZ-R** | PhysioNet/CinC 2019 real ICU data (14,635 stays) | 300 gradient-boosted trees, 108 features (all 34 clinical variables, measurement recency, trends, demographics) | Real-data performance claims |
 
 Both predict Sepsis-3 onset within the next 6 hours, scored hourly. Uncertainty uses class-conditional split conformal prediction (alpha 0.10); alert thresholds are set on a separate calibration split under a false-alarm budget.
 
@@ -17,35 +17,35 @@ Both predict Sepsis-3 onset within the next 6 hours, scored hourly. Uncertainty 
 
 **Simulated cohort (method demonstration, 3,000 held-out stays, 357 septic):** AUROC 0.818 (0.80–0.83); 75% of septic patients alerted vs 48% for SIRS at 11.7 vs 47.3 false alerts/100 patient-days.
 
-**AuraZ-R on real data (998 held-out stays, 72 septic):** AUROC **0.775** (0.72–0.82); 0.732 without ICU-time features; 0.720 also without measurement recency; first 16-feature model 0.608. Conformal coverage 89.3% (septic) / 89.8% (non-septic), target 90%.
+**AuraZ-R on real data (2,927 held-out stays, 175 septic):** AUROC **0.819** (0.79–0.84); 0.794 without ICU-time features; 0.766 also without measurement recency; first 16-feature model 0.608. Conformal coverage 86.3% (septic) / 91.3% (non-septic), target 90%.
 
 | Real-data alerting | Septic patients alerted | False alerts / 100 patient-days |
 |---|---|---|
-| AuraZ-R, low-burden setting | 51% | 16.7 |
-| AuraZ-R at SIRS's alarm rate | 94% | 117.6 |
-| SIRS ≥ 2 | 88% | 111.9 |
+| AuraZ-R, low-burden setting | 57% | 15.0 |
+| AuraZ-R at SIRS's alarm rate | 95% | 115.6 |
+| SIRS ≥ 2 | 89% | 113.8 |
 
 ## External validation (train on one hospital, test on the other)
 
 | Train → test | Test septic stays | AUROC (95% CI) | Coverage septic · non-septic |
 |---|---|---|---|
-| A → B | 142 | 0.743 (0.70–0.78) | 77% · 94% |
-| B → A | 200 | 0.730 (0.69–0.77) | 87% · 82% |
+| A → B | 329 | 0.737 (0.71–0.77) | 70% · 93% |
+| B → A | 590 | 0.745 (0.73–0.76) | 93% · 80% |
 
-Pooled random split for comparison: AUROC 0.785 (0.74–0.83). **Cross-hospital performance is lower and uncertainty coverage does not fully transfer: recalibrate per hospital.**
+Pooled random split for comparison: AUROC 0.819 (0.79–0.84). **Cross-hospital performance is lower and uncertainty coverage does not fully transfer: recalibrate per hospital.**
 
 ## Subgroup audit (same operating point for every group)
 
 | Subgroup | Septic stays | AUROC | Alert rate | Septic hours alerted |
 |---|---|---|---|---|
-| sex=female | 26 | 0.797 | 4.1% | 40% |
-| sex=male | 50 | 0.774 | 5.7% | 27% |
-| age<50 | 17 | 0.744 | 7.9% | 39% |
-| age 50-64 | 23 | 0.815 | 4.5% | 29% |
-| age 65-74 | 22 | 0.766 | 5.0% | 31% |
-| age>=75 | 14 | 0.819 | 2.6% | 26% |
+| sex=female | 56 | 0.833 | 4.8% | 46% |
+| sex=male | 119 | 0.811 | 5.2% | 32% |
+| age<50 | 42 | 0.822 | 5.9% | 34% |
+| age 50-64 | 56 | 0.806 | 2.8% | 23% |
+| age 65-74 | 35 | 0.843 | 5.9% | 54% |
+| age>=75 | 42 | 0.815 | 6.0% | 41% |
 
-alert if risk >= 0.0291 (top 5% of all held-out patient-hours). Subgroups have few septic stays; differences are a screening signal, not proof of bias. Race/ethnicity is not in the dataset and was not audited.
+alert if risk >= 0.0391 (top 5% of all held-out patient-hours). Subgroups have few septic stays; differences are a screening signal, not proof of bias. Race/ethnicity is not in the dataset and was not audited.
 
 ## Limitations
 - Headline demo numbers are simulated. Real-data results come from retrospective PhysioNet 2019 data from two US hospitals.
