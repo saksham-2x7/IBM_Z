@@ -6,7 +6,8 @@ export interface Model {
   std: number[];
   coef: number[];
   intercept: number;
-  qhat: number;
+  qhat_pos: number;
+  qhat_neg: number;
   alpha: number;
   alert_threshold: number;
 }
@@ -32,7 +33,10 @@ export interface Metrics {
   auprc: number;
   prevalence: number;
   auroc_gbm_comparison: number;
-  conformal: { alpha: number; target_coverage: number; empirical_coverage: number; uncertain_fraction: number };
+  conformal: {
+    method: string; alpha: number; target_coverage: number; empirical_coverage: number;
+    coverage_septic_hours: number; coverage_nonseptic_hours: number; uncertain_fraction: number;
+  };
   alerting: {
     threshold: number;
     false_alert_budget_per_100_patient_days: number;
@@ -42,6 +46,16 @@ export interface Metrics {
   lead_time_hist: number[];
   roc: { fpr: number[]; tpr: number[] };
   feature_importance: [string, number][];
+}
+
+export interface RealMetrics {
+  data: string; model: string; n_features: number;
+  cohorts: Metrics['cohorts']; auroc: number; auroc_ci95: [number, number]; auprc: number; prevalence: number;
+  baselines: { logistic_16_features: number; logistic_same_rich_features: number };
+  ablations: { without_icu_time: number; without_icu_time_and_recency: number };
+  conformal: Metrics['conformal'];
+  alerting: Metrics['alerting'] & { model_at_sirs_false_alert_rate: (AlertStats & { threshold: number }) | null };
+  top_features_by_gain: [string, number][];
 }
 
 export interface AlertStats {
@@ -81,10 +95,16 @@ export function contributions(m: Model, x: number[]) {
     .sort((a, b) => Math.abs(b.impact) - Math.abs(a.impact));
 }
 
-/** Split-conformal prediction set: which labels remain plausible at the calibrated coverage. */
-export function conformalSet(m: Model, p: number): 'sepsis' | 'not-at-risk' | 'uncertain' {
-  const pos = 1 - p <= m.qhat, neg = p <= m.qhat;
-  return pos && neg ? 'uncertain' : pos ? 'sepsis' : 'not-at-risk';
+export type ConformalLabel = 'ruled out' | 'uncertain' | 'sepsis not ruled out';
+
+/**
+ * Class-conditional (Mondrian) conformal prediction set at 1 - alpha coverage per class.
+ * "sepsis not ruled out": only the sepsis label is plausible; "ruled out": only no-sepsis is plausible;
+ * "uncertain": both labels are plausible (or neither), so the model cannot decide at this confidence.
+ */
+export function conformalSet(m: Model, p: number): ConformalLabel {
+  const pos = 1 - p <= m.qhat_pos, neg = p <= m.qhat_neg;
+  return pos === neg ? 'uncertain' : pos ? 'sepsis not ruled out' : 'ruled out';
 }
 
 const base = import.meta.env.BASE_URL;

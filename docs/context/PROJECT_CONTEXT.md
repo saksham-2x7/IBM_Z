@@ -9,7 +9,7 @@ Repo: https://github.com/saksham-2x7/IBM_Z  ·  Stack: Python (stdlib + numpy/sk
 | Item | Status |
 |---|---|
 | Training/validation pipeline `ml/train.py` | Real, runs. Data is a **simulated** ICU cohort (confounders, sparse labs) |
-| Real-data retrain `ml/train_physionet.py` | Run on a 772-stay PhysioNet 2019 sample: **AUROC 0.62 (95% CI 0.48–0.73) — simulated results do NOT transfer.** See `docs/REAL_DATA_PILOT.md`. Always disclose this |
+| Real-data model AuraZ-R `ml/train_physionet_gbm.py` | PhysioNet 2019, 4,989 stays: **AUROC 0.775 (95% CI 0.72–0.82)**, 0.73 without ICU-time features; first 16-feature model got 0.61. Runs on the z17 with exact parity. See `docs/REAL_DATA_PILOT.md` |
 | Model + browser scoring `public/model.json`, `src/lib/model.ts` | Real |
 | IBM LinuxONE inference service `ml/serve.py` | Real. Verified on a real **IBM z17 (machine 9175, Telum II, `nnpa` flag present)**: remote scores equal local scores exactly, ~12 µs server compute. Runs on CPU, **NOT yet on the NNPA accelerator** |
 | Telum II / NNPA acceleration (ONNX + zDLC) | **Not done** (roadmap). Never claim it |
