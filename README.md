@@ -14,7 +14,7 @@ AuraZ scores ICU vitals every hour and warns clinicians hours before sepsis onse
 | Latency Lab | **Measured** on the viewer's CPU. Cloud path is a labelled, adjustable assumption |
 | IBM Z Telum II hardware numbers | **Not yet measured.** Next milestone: LinuxONE Community Cloud + ONNX / zDLC |
 | IBM LinuxONE inference service (`ml/serve.py`) | **Real.** Standard-library Python, runs on s390x with nothing to install; the app's Live Replay and 200-bed Ward score on it once connected, and the IBM Z tab verifies remote = local results |
-| PhysioNet 2019 retraining (`ml/train_physionet.py`) | **Ready, not yet run on real data.** Tested end-to-end on files in the PhysioNet format; needs the open-access download |
+| PhysioNet 2019 retraining (`ml/train_physionet.py`) | **Run on a 772-stay sample: AUROC 0.62 (95% CI 0.48–0.73) — the simulated results do not transfer.** See `docs/REAL_DATA_PILOT.md` |
 
 ## Held-out results (simulated cohort, 3,000 test stays)
 
@@ -53,6 +53,6 @@ Tabs: **Live Replay** · **Ward** (200 beds) · **Validation** · **IBM Z** · A
 Run through the app against a real IBM z17 (Telum II, machine type 9175, `nnpa` flag present) on the LinuxONE Community Cloud: remote scores match the local reference model exactly (max difference 0.0), server-side compute is ~12 µs per request in pure Python, and the 200-bed ward scores in one batch. The ~445 ms median round trip in that test is the network distance to the data centre, which is the argument for scoring beside the data.
 
 ## Roadmap
-1. Retrain on PhysioNet 2019 (open access) and report real-data metrics.
+1. Improve real-data performance: full PhysioNet 2019 (40k stays), more features, gradient boosting with missingness indicators (see `docs/REAL_DATA_PILOT.md`).
 2. Export ONNX, compile with the IBM Z Deep Learning Compiler, benchmark on LinuxONE Community Cloud.
 3. Subgroup fairness audit (age, sex, race) and calibration plots.

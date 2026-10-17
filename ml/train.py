@@ -71,7 +71,8 @@ def feat(v, h):
 def table(P):
     X, y, pid, hh = [], [], [], []
     for i, p in enumerate(P):
-        end = H if p["onset"] is None else p["onset"]  # drop post-onset hours
+        n = len(p["v"]["hr"])
+        end = n if p["onset"] is None else min(n, p["onset"])  # drop post-onset hours
         for h in range(6, end):
             X.append(feat(p["v"], h)); pid.append(i); hh.append(h)
             y.append(int(p["onset"] is not None and 0 < p["onset"] - h <= 6))
@@ -85,7 +86,8 @@ def alerts(P, score_fn, refractory=12):
     """Patient-level: first alert per patient, then re-arm after `refractory` h (non-septic only counts false alerts)."""
     out = []
     for p in P:
-        end = H if p["onset"] is None else p["onset"]
+        n = len(p["v"]["hr"])
+        end = n if p["onset"] is None else min(n, p["onset"])
         fired = [h for h in range(6, end) if score_fn(p, h)]
         first = fired[0] if fired else None
         n_false = 0; last = -99
@@ -173,11 +175,13 @@ def main():
     for want, n in (("sepsis", 4), ("none", 2), ("postop", 1), ("hypovol", 1)):
         pick += [p for p in te if p["kind"] == want][:n]
     pick = pick or te[:8]
+    ward = None
     json.dump([dict(id=f"TEST-{i+1:02d}", kind=p["kind"], onset=p["onset"],
                     vitals={c: np.round(p["v"][c], 2).tolist() for c in CH}) for i, p in enumerate(pick)],
               open(f"{OUT}/replay.json", "w"))
     # ward: 200 held-out stays for the multi-bed view (patients 100..299 of the test cohort)
     ward = te[100:300]
+    if cohort_override: ward = []  # real-data run: variable-length stays; UI ward/replay assume 48 h
     json.dump([dict(id=f"BED-{i+1:03d}", onset=p["onset"], kind=p["kind"],
                     vitals={c: np.round(p["v"][c], 1).tolist() for c in CH}) for i, p in enumerate(ward)],
               open(f"{OUT}/ward.json", "w"), separators=(",", ":"))
