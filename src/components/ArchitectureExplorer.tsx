@@ -3,8 +3,8 @@ import React from 'react';
 const LAYERS: [string, string, string, 'built' | 'next'][] = [
   ['1 · Bedside data', 'Hourly vitals and labs (HR, MAP, SBP, RR, temperature, SpO2, lactate, WBC). Labs arrive sparsely and are forward-filled.', 'ml/train.py (simulated cohort) · PhysioNet 2019 loader next', 'built'],
   ['2 · Features', '16 features per patient-hour: current values, 3–6 h trends, shock index, 6 h extremes. Identical code in Python and TypeScript.', 'ml/train.py · src/lib/model.ts', 'built'],
-  ['3 · Model + calibration', 'Logistic model (matches gradient boosting on this task), class-conditional conformal labels (sepsis not ruled out / ruled out / uncertain), alert threshold set under a false-alert budget on a separate cohort.', 'public/model.json · public/metrics.json', 'built'],
-  ['4 · Inference on IBM LinuxONE', 'Standard-library Python service on s390x: /health reports the IBM machine type and NNPA flag, /score scores a batch (e.g. a 200-bed ward) beside the data.', 'ml/serve.py', 'built'],
+  ['3 · Models + calibration', 'Demo model: logistic regression on 16 features (simulated cohort, exactly explainable). Real-data model AuraZ-R: 300 gradient-boosted trees over 108 features from all 34 PhysioNet variables (AUROC 0.775 on real held-out patients). Both use class-conditional conformal labels and an alert threshold set under a false-alarm budget on a separate cohort.', 'ml/train.py · ml/train_physionet_gbm.py · public/model*.json', 'built'],
+  ['4 · Inference on IBM LinuxONE', 'Standard-library Python service on s390x: /health reports the IBM machine type and NNPA flag, /score and /score_real score a batch (e.g. a 200-bed ward, or real-data rows through the 300 trees) beside the data. Verified on an IBM z17 with exact parity.', 'ml/serve.py', 'built'],
   ['5 · Telum II acceleration', 'Export to ONNX, compile with the IBM Z Deep Learning Compiler for the on-chip NNPA accelerator, benchmark against CPU.', 'roadmap', 'next'],
   ['6 · Clinician view', 'Live replay with explanation and uncertainty, 200-bed ward ranking, validation against the SIRS rule.', 'src/components', 'built'],
 ];

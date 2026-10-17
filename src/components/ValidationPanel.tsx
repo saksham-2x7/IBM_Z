@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { Metrics } from '../lib/model';
+import { Metrics, RealMetrics } from '../lib/model';
 
 const pct = (v: number, d = 0) => `${(v * 100).toFixed(d)}%`;
 
 export const ValidationPanel: React.FC<{ m: Metrics }> = ({ m }) => {
-  const [real, setReal] = useState<Metrics | null>(null);
+  const [real, setReal] = useState<RealMetrics | null>(null);
   useEffect(() => { fetch(`${import.meta.env.BASE_URL}metrics_physionet.json`).then((r) => r.json()).then(setReal).catch(() => setReal(null)); }, []);
   const a = m.alerting, W = 300, H = 220;
   const roc = m.roc.fpr.map((f, i) => `${30 + f * (W - 40)},${H - 24 - m.roc.tpr[i] * (H - 40)}`).join(' ');
@@ -20,23 +20,31 @@ export const ValidationPanel: React.FC<{ m: Metrics }> = ({ m }) => {
       <div className="rounded-2xl border border-amber-700/40 bg-amber-950/20 p-4 text-sm text-amber-200">
         <b>Transparency:</b> {m.data} The cards below are a <b>method demonstration</b> on a patient-level held-out test cohort of {m.cohorts.test.toLocaleString()} simulated stays ({m.cohorts.test_septic} septic). Real-data results from the same pipeline are in the PhysioNet panel just below.</div>
       {real && (
-        <div className="rounded-2xl border border-slate-700 bg-slate-900/60 p-5">
+        <div className="rounded-2xl border border-emerald-800/50 bg-slate-900/60 p-5">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
-            <h3 className="font-semibold text-white">Real ICU data: PhysioNet 2019 sample</h3>
-            <span className="text-xs text-slate-400">{real.cohorts.test.toLocaleString()} held-out stays · {real.cohorts.test_septic} septic · same pipeline, retrained</span>
+            <h3 className="font-semibold text-white">Real ICU data · AuraZ-R on PhysioNet 2019</h3>
+            <span className="text-xs text-slate-400">{real.cohorts.test.toLocaleString()} held-out stays · {real.cohorts.test_septic} septic · {real.n_features} features · gradient-boosted trees</span>
           </div>
           <div className="mt-3 grid gap-3 font-mono sm:grid-cols-4">
-            {[['AUROC (deployed)', real.auroc.toFixed(3), `95% CI ${real.auroc_ci95[0].toFixed(2)}–${real.auroc_ci95[1].toFixed(2)}`],
-              ['Gradient boosting', real.auroc_gbm_comparison.toFixed(3), 'not deployed yet'],
-              ['Conformal coverage', `${pct(real.conformal.coverage_septic_hours, 1)} · ${pct(real.conformal.coverage_nonseptic_hours, 1)}`, 'septic · non-septic, target 90%'],
-              ['Says "uncertain"', pct(real.conformal.uncertain_fraction), 'of hours: the model admits it cannot decide']].map(([t, val, s]) => (
+            {[['AUROC, AuraZ-R', real.auroc.toFixed(3), `95% CI ${real.auroc_ci95[0].toFixed(2)}–${real.auroc_ci95[1].toFixed(2)}`],
+              ['Without ICU-time features', real.ablations.without_icu_time.toFixed(3), `and without recency: ${real.ablations.without_icu_time_and_recency.toFixed(3)}`],
+              ['Earlier 16-feature model', real.baselines.logistic_16_features.toFixed(3), `same rich features, logistic: ${real.baselines.logistic_same_rich_features.toFixed(3)}`],
+              ['Conformal coverage', `${pct(real.conformal.coverage_septic_hours, 1)} · ${pct(real.conformal.coverage_nonseptic_hours, 1)}`, 'septic · non-septic, target 90%']].map(([t, val, s]) => (
               <div key={t} className="rounded-xl bg-slate-950 p-3"><div className="text-[11px] text-slate-500">{t}</div><div className="text-xl font-bold text-slate-100">{val}</div><div className="text-[11px] text-slate-500">{s}</div></div>
             ))}
           </div>
+          <table className="mt-4 w-full text-sm font-mono">
+            <thead><tr className="text-left text-xs text-slate-500"><th className="py-1">Operating point (same held-out patients)</th><th>Septic caught early</th><th>False alerts / 100 patient-days</th></tr></thead>
+            <tbody>
+              <tr className="border-t border-slate-800"><td className="py-2 text-slate-300">AuraZ-R, low-burden setting (budget {real.alerting.false_alert_budget_per_100_patient_days})</td><td className="text-emerald-400">{pct(real.alerting.model.sensitivity)}</td><td className="text-emerald-400">{real.alerting.model.false_alerts_per_100_patient_days.toFixed(1)}</td></tr>
+              {real.alerting.model_at_sirs_false_alert_rate && <tr className="border-t border-slate-800"><td className="py-2 text-slate-300">AuraZ-R at the SIRS alarm rate</td><td className="font-bold text-emerald-400">{pct(real.alerting.model_at_sirs_false_alert_rate.sensitivity)}</td><td className="text-slate-300">{real.alerting.model_at_sirs_false_alert_rate.false_alerts_per_100_patient_days.toFixed(1)}</td></tr>}
+              <tr className="border-t border-slate-800"><td className="py-2 text-slate-300">SIRS ≥ 2 rule</td><td className="text-slate-400">{pct(real.alerting.baseline_sirs_rule.sensitivity)}</td><td className="text-slate-400">{real.alerting.baseline_sirs_rule.false_alerts_per_100_patient_days.toFixed(1)}</td></tr>
+            </tbody>
+          </table>
           <p className="mt-3 text-sm text-slate-300">
-            On real data the model is weak: at about {real.alerting.model.false_alerts_per_100_patient_days.toFixed(0)} false alerts per 100 patient-days it catches {pct(real.alerting.model.sensitivity)} of septic patients
-            (SIRS: {pct(real.alerting.baseline_sirs_rule.sensitivity)}, but {real.alerting.baseline_sirs_rule.false_alerts_per_100_patient_days.toFixed(0)} false alerts). The simulated results above do not transfer.
-            What does transfer is the calibration: the uncertainty guarantee still holds, and the model flags most hours as uncertain instead of overclaiming.
+            The simulated numbers above do not carry over one-to-one, so for real data we built AuraZ-R: all 34 clinical variables, how recently each was measured, trends and demographics.
+            It reaches AUROC {real.auroc.toFixed(2)} on real held-out patients (still {real.ablations.without_icu_time.toFixed(2)} without ICU-time features) and keeps its uncertainty guarantee.
+            It is a 4,989-stay sample with {real.cohorts.test_septic} septic test stays, so the confidence interval is wide; this is research evidence, not clinical validation.
           </p>
         </div>
       )}
