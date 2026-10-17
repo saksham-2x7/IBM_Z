@@ -1,9 +1,11 @@
 # AuraZ team plan (IBM Z Datathon 2026)
 
-**Collaborators on the repo:** `saikailashnathk-max`, `NAMAN121208`, `jyothirodrigues2511-wq` (Saksham = `saksham-2x7`). Assign two of them as Teammate A and Teammate B below.
+**Team:** Saksham `saksham-2x7` (lead) · Kailash `saikailashnathk-max` (Antigravity) = Teammate A · Naman `NAMAN121208` (GPT + Antigravity) = Teammate B · Jyothi `jyothirodrigues2511-wq` (no AI tool; QA / fact-check / submission, see `docs/context/JYOTHI_TASKS.md`).
+
+Each AI agent starts by reading `docs/context/PROJECT_CONTEXT.md` and their own file in `docs/context/`.
 
 ## Ground rules (everyone)
-1. One branch per person: `a/ui`, `b/docs`. Open a PR to `main`; Saksham merges. Never push to `main` directly.
+1. One branch per person: `kailash/ui`, `naman/docs`, `jyothi/qa`. Open a PR to `main`; Saksham merges. Never push to `main` directly.
 2. **Only edit the files you own** (listed per phase). Anything else: ask in the group chat.
 3. **No invented numbers.** Every metric comes from `public/metrics.json` or a script in this repo. If a claim has no source, delete it.
 4. Start every AI session with: *"Read README.md, docs/TEAM_PLAN.md and the files I own. Follow the ground rules. Show me the output of anything you run."*
@@ -20,7 +22,7 @@
 
 ---
 
-## Teammate A (has Antigravity) — product & UI
+## Teammate A = Kailash (Antigravity) — product & UI
 ### Phase 1 — UI audit and polish (files: `src/components/Header.tsx`, `src/index.css`, `src/App.tsx`)
 Deliver: one accent colour, consistent spacing, readable at 1280px and phone width, keyboard-accessible tabs, WCAG AA contrast, no horizontal scroll.
 Done when: Lighthouse accessibility ≥ 95 and screenshots before/after in the PR.
@@ -38,7 +40,7 @@ Flow: replay a septic patient → alert + explanation + uncertainty → Validati
 
 ---
 
-## Teammate B (GPT Plus + Antigravity) — evidence, writing, testing
+## Teammate B = Naman (GPT Plus + Antigravity) — evidence, writing, testing
 ### Phase 1 — Clinical grounding (files: `docs/clinical.md`)
 Deliver: 1-page problem statement with **verifiable citations** (sepsis burden, cost of delayed treatment, alarm fatigue, why SIRS is weak, Sepsis-3 definition). Every statistic needs a link; remove any you cannot verify.
 > **Prompt:** Research and write `docs/clinical.md`: 8–10 cited facts on sepsis burden, delayed-treatment mortality, alert fatigue and SIRS limits. For each, give the exact source URL and the sentence it supports. Flag anything you could not verify instead of guessing.
