@@ -7,7 +7,7 @@ interface Props {
   model: Model;
   remote: string;
   remoteLabel: string;
-  onSelectPatient?: (patientIndex: number, hour: number) => void;
+  onSelectPatient?: (patient: ReplayPatient, hour: number) => void;
 }
 
 interface Bed {
@@ -82,23 +82,8 @@ export const WardView: React.FC<Props> = ({ model, remote, remoteLabel, onSelect
 
   const handleBedClick = (idx: number) => {
     setSelectedBedIdx(idx);
-    if (onSelectPatient) {
-      onSelectPatient(idx, hour);
-    }
-    // Dispatch custom event for cross-component linking and switch tab if standalone
-    window.dispatchEvent(
-      new CustomEvent('auraz:select-patient', {
-        detail: {
-          patientIndex: idx,
-          patientId: ward?.[idx]?.id,
-          hour,
-        },
-      })
-    );
-    // Programmatically activate Replay tab if accessible
-    const replayTabBtn = document.getElementById('tab-replay');
-    if (replayTabBtn) {
-      replayTabBtn.click();
+    if (ward && ward[idx] && onSelectPatient) {
+      onSelectPatient(ward[idx], hour);
     }
   };
 
@@ -162,7 +147,6 @@ export const WardView: React.FC<Props> = ({ model, remote, remoteLabel, onSelect
     .sort((a, b) => b.risk! - a.risk!);
 
   // Colour-blind-safe palette (Orange / Blue / Slate):
-  // Orange (High risk/Alert) #f97316 | Blue/Cyan (Rising/Moderate) #0284c7 | Slate (Low risk) #1e293b | Deep Slate (Onset reached) #475569
   const bedColor = (r: number | null) => {
     if (r === null) return 'bg-slate-700 border-slate-600'; // Sepsis onset reached
     if (r >= model.alert_threshold) return 'bg-orange-500 border-orange-400 text-slate-950'; // Alert (High Risk)
@@ -215,7 +199,7 @@ export const WardView: React.FC<Props> = ({ model, remote, remoteLabel, onSelect
         </div>
       </div>
 
-      {/* KPI Cards with stable heights to prevent layout shift */}
+      {/* KPI Cards */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
         {[
           { label: 'Alerts on beds that became septic', value: stats.tp, color: 'text-sky-400', icon: CheckCircle },

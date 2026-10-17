@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Play, Pause, RotateCcw, ShieldAlert, ShieldCheck, HelpCircle, AlertCircle, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { Play, Pause, RotateCcw, ShieldAlert, ShieldCheck, HelpCircle, AlertCircle, ArrowUpRight, ArrowDownRight, Bed } from 'lucide-react';
 import { remoteScore } from '../lib/remote';
 import { buildFeatures, conformalSet, contributions, FEATURE_LABELS, Model, ReplayPatient, score } from '../lib/model';
 
@@ -8,6 +8,7 @@ interface Props {
   patients: ReplayPatient[];
   remote: string;
   remoteLabel: string;
+  target?: { patient: ReplayPatient; hour: number } | null;
 }
 
 const KIND: Record<string, string> = {
@@ -79,55 +80,50 @@ function explainTopContributions(m: Model, x: number[]): string {
   }
 }
 
-export const ReplayLab: React.FC<Props> = ({ model, patients, remote, remoteLabel }) => {
-  const [allPatients, setAllPatients] = useState<ReplayPatient[]>(patients);
-  const [idx, setIdx] = useState(0);
+export const ReplayLab: React.FC<Props> = ({ model, patients, remote, remoteLabel, target }) => {
+  const [wardPatients, setWardPatients] = useState<ReplayPatient[]>([]);
+  const [activePatient, setActivePatient] = useState<ReplayPatient>(patients[0]);
   const [hour, setHour] = useState(6);
   const [playing, setPlaying] = useState(false);
 
-  // Sync if patients prop changes
+  // Load 200 ward patients so ReplayLab can open any ward bed
   useEffect(() => {
-    setAllPatients(patients);
-  }, [patients]);
+    fetch(`${import.meta.env.BASE_URL}ward.json`)
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data: ReplayPatient[]) => setWardPatients(data))
+      .catch(() => {});
+  }, []);
 
-  // Support click-through from WardView via custom event
+  // When target prop is received from App.tsx (e.g. from WardView click)
   useEffect(() => {
-    const handleSelectPatient = (e: Event) => {
-      const detail = (e as CustomEvent).detail;
-      if (!detail) return;
+    if (!target) return;
+    setActivePatient(target.patient);
+    if (typeof target.hour === 'number' && target.hour >= 6 && target.hour <= 47) {
+      setHour(target.hour);
+    }
+    setPlaying(false);
+  }, [target]);
 
-      if (detail.patientId) {
-        const foundIdx = allPatients.findIndex((pt) => pt.id === detail.patientId);
-        if (foundIdx >= 0) {
-          setIdx(foundIdx);
-        }
-      } else if (typeof detail.patientIndex === 'number' && detail.patientIndex < allPatients.length) {
-        setIdx(detail.patientIndex);
-      }
-
-      if (typeof detail.hour === 'number' && detail.hour >= 6 && detail.hour <= 47) {
-        setHour(detail.hour);
-      }
-      setPlaying(false);
-    };
-
-    window.addEventListener('auraz:select-patient', handleSelectPatient);
-    return () => window.removeEventListener('auraz:select-patient', handleSelectPatient);
-  }, [allPatients]);
+  // Ensure activePatient defaults sensibly
+  useEffect(() => {
+    if (!target && !activePatient && patients.length > 0) {
+      setActivePatient(patients[0]);
+    }
+  }, [patients, target, activePatient]);
 
   // Empty state guard
-  if (!allPatients || allPatients.length === 0) {
+  if (!activePatient) {
     return (
       <div className="mx-auto max-w-7xl p-8 text-center" role="status">
         <div className="inline-flex items-center gap-3 rounded-xl border border-slate-800 bg-slate-900/60 px-6 py-4 font-mono text-sm text-slate-400">
           <AlertCircle className="h-5 w-5 text-slate-500" aria-hidden="true" />
-          No patient trajectories available for replay.
+          No patient trajectory selected.
         </div>
       </div>
     );
   }
 
-  const p = allPatients[idx] || allPatients[0];
+  const p = activePatient;
 
   const local = useMemo(() => {
     const out: (number | null)[] = [];
@@ -165,8 +161,8 @@ export const ReplayLab: React.FC<Props> = ({ model, patients, remote, remoteLabe
     return () => clearInterval(t);
   }, [playing]);
 
-  const pick = (i: number) => {
-    setIdx(i);
+  const pickPatient = (pt: ReplayPatient) => {
+    setActivePatient(pt);
     setHour(6);
     setPlaying(false);
   };
@@ -195,15 +191,24 @@ export const ReplayLab: React.FC<Props> = ({ model, patients, remote, remoteLabe
     ['Lactate', p.vitals.lactate[hour], 'mmol/L'],
   ];
 
+  const isWardPatient = p.id.startsWith('BED-');
+
   return (
     <div className="mx-auto max-w-7xl space-y-6 p-4 sm:p-6">
       {/* Header card with patient selector */}
       <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <span className="rounded bg-cyan-950 px-2 py-0.5 font-mono text-xs font-semibold text-cyan-400 border border-cyan-800/50">
-              LIVE MODEL REPLAY
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="rounded bg-cyan-950 px-2 py-0.5 font-mono text-xs font-semibold text-cyan-400 border border-cyan-800/50">
+                LIVE MODEL REPLAY
+              </span>
+              {isWardPatient && (
+                <span className="flex items-center gap-1 rounded bg-orange-950/60 border border-orange-500/40 px-2 py-0.5 text-xs font-mono text-orange-300">
+                  <Bed className="h-3 w-3" /> ICU Ward Bed: {p.id}
+                </span>
+              )}
+            </div>
             <h2 className="mt-2 text-xl font-bold font-mono text-white tracking-tight">
               Watch the trained model score a held-out patient, hour by hour
             </h2>
@@ -234,26 +239,54 @@ export const ReplayLab: React.FC<Props> = ({ model, patients, remote, remoteLabe
           </div>
         </div>
 
-        {/* Patient Selection Tabs */}
-        <div className="mt-4 flex flex-wrap gap-2" role="group" aria-label="Select Patient">
-          {allPatients.map((pt, i) => {
-            const isSelected = i === idx;
-            return (
-              <button
-                key={pt.id}
-                type="button"
-                onClick={() => pick(i)}
-                aria-pressed={isSelected}
-                className={`rounded-lg border px-3 py-1.5 text-xs font-mono transition-colors focus-visible:ring-2 focus-visible:ring-cyan-400 ${
-                  isSelected
-                    ? 'border-cyan-400 bg-cyan-950/60 font-semibold text-cyan-300 shadow-sm'
-                    : 'border-slate-800 bg-slate-950/50 text-slate-400 hover:border-slate-700 hover:text-slate-200'
-                }`}
+        {/* Patient Selection Controls */}
+        <div className="mt-4 flex flex-wrap items-center gap-3">
+          {/* 8 Primary Replay Patient Buttons */}
+          <div className="flex flex-wrap gap-2" role="group" aria-label="Select Curated Patient">
+            {patients.map((pt) => {
+              const isSelected = pt.id === p.id;
+              return (
+                <button
+                  key={pt.id}
+                  type="button"
+                  onClick={() => pickPatient(pt)}
+                  aria-pressed={isSelected}
+                  className={`rounded-lg border px-3 py-1.5 text-xs font-mono transition-colors focus-visible:ring-2 focus-visible:ring-cyan-400 ${
+                    isSelected
+                      ? 'border-cyan-400 bg-cyan-950/60 font-semibold text-cyan-300 shadow-sm'
+                      : 'border-slate-800 bg-slate-950/50 text-slate-400 hover:border-slate-700 hover:text-slate-200'
+                  }`}
+                >
+                  {pt.id} · {KIND[pt.kind] ?? pt.kind}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Ward Bed Selector Dropdown (200 Beds) */}
+          {wardPatients.length > 0 && (
+            <div className="flex items-center gap-2 pl-1">
+              <label htmlFor="ward-bed-select" className="sr-only">
+                Select from 200 Ward Beds
+              </label>
+              <select
+                id="ward-bed-select"
+                value={isWardPatient ? p.id : ''}
+                onChange={(e) => {
+                  const selected = wardPatients.find((w) => w.id === e.target.value);
+                  if (selected) pickPatient(selected);
+                }}
+                className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-1.5 font-mono text-xs text-slate-300 focus-visible:ring-2 focus-visible:ring-cyan-400"
               >
-                {pt.id} · {KIND[pt.kind] ?? pt.kind}
-              </button>
-            );
-          })}
+                <option value="">Inspect ward bed (200 available)…</option>
+                {wardPatients.map((w) => (
+                  <option key={w.id} value={w.id}>
+                    {w.id} {w.onset !== null ? `(septic @ h${w.onset})` : '(stable)'}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
         </div>
       </div>
 
@@ -276,7 +309,7 @@ export const ReplayLab: React.FC<Props> = ({ model, patients, remote, remoteLabe
               </span>
             </div>
 
-            {/* SVG Waveform Chart with fixed dimensions to prevent layout shifts */}
+            {/* SVG Waveform Chart */}
             <div className="mt-3 aspect-[720/220] w-full">
               <svg viewBox={`0 0 ${W} ${Hh}`} className="w-full h-full" aria-label="Sepsis risk trajectory graph">
                 {[0, 0.25, 0.5, 0.75, 1].map((g) => (
@@ -454,7 +487,7 @@ export const ReplayLab: React.FC<Props> = ({ model, patients, remote, remoteLabe
               {clinicalReasonSentence}
             </div>
 
-            {/* Feature Bars with Colorblind-Safe Palette (Orange = Raises Risk, Sky = Lowers Risk) */}
+            {/* Feature Bars with Colorblind-Safe Palette */}
             <div className="mt-4 space-y-2.5">
               {contrib.map((c) => {
                 const isHarm = c.impact > 0;
