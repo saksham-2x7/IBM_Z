@@ -6,6 +6,12 @@ const pct = (v: number, d = 0) => `${(v * 100).toFixed(d)}%`;
 export const ValidationPanel: React.FC<{ m: Metrics }> = ({ m }) => {
   const [real, setReal] = useState<RealMetrics | null>(null);
   const [audit, setAudit] = useState<Audit | null>(null);
+  const [full, setFull] = useState<RealMetrics | null>(null);
+  const [fullAudit, setFullAudit] = useState<Audit | null>(null);
+  useEffect(() => {
+    fetch(`${import.meta.env.BASE_URL}full/metrics_physionet.json`).then((r) => (r.ok ? r.json() : null)).then(setFull).catch(() => setFull(null));
+    fetch(`${import.meta.env.BASE_URL}full/audit_physionet.json`).then((r) => (r.ok ? r.json() : null)).then(setFullAudit).catch(() => setFullAudit(null));
+  }, []);
   useEffect(() => { fetch(`${import.meta.env.BASE_URL}audit_physionet.json`).then((r) => (r.ok ? r.json() : null)).then(setAudit).catch(() => setAudit(null)); }, []);
   useEffect(() => { fetch(`${import.meta.env.BASE_URL}metrics_physionet.json`).then((r) => r.json()).then(setReal).catch(() => setReal(null)); }, []);
   const a = m.alerting, W = 300, H = 220;
@@ -22,10 +28,27 @@ export const ValidationPanel: React.FC<{ m: Metrics }> = ({ m }) => {
       <div className="rounded-2xl border border-amber-700/40 bg-amber-950/20 p-4 text-sm text-amber-200">
         <b>Transparency:</b> {m.data} The cards below are a <b>method demonstration</b> on a patient-level held-out test cohort of {m.cohorts.test.toLocaleString()} simulated stays ({m.cohorts.test_septic} septic). Real-data results from the same pipeline are in the PhysioNet panel just below.</div>
       <nav className="flex flex-wrap gap-2 text-sm" aria-label="Jump to section">
-        {[['#real', 'Real ICU data'], ['#audit', 'Other hospital + fairness'], ['#sim', 'Simulated demo']].map(([h, t]) => (
+        {[...(full ? [['#full', 'All stays (full dataset)']] : []), ['#real', 'Real ICU data (first run)'], ['#audit', 'Other hospital + fairness'], ['#sim', 'Simulated demo']].map(([h, t]) => (
           <a key={h} href={h} className="rounded-full border border-slate-700 bg-slate-900 px-3 py-1 font-medium text-cyan-300 transition-colors hover:border-cyan-400 hover:bg-cyan-950">{t}</a>
         ))}
       </nav>
+      {full && (
+        <div id="full" className="rounded-2xl border border-cyan-800 bg-slate-900/60 p-5">
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <h3 className="font-semibold text-white">Full dataset · AuraZ-R on every PhysioNet 2019 stay</h3>
+            <span className="text-xs text-slate-400">{(full.cohorts.train + full.cohorts.calibration + full.cohorts.test).toLocaleString()} stays · {full.cohorts.test.toLocaleString()} held out ({full.cohorts.test_septic} septic) · same method as the first run</span>
+          </div>
+          <div className="mt-3 grid gap-3 font-mono sm:grid-cols-4">
+            {[['AUROC', full.auroc.toFixed(3), `95% CI ${full.auroc_ci95[0].toFixed(2)}–${full.auroc_ci95[1].toFixed(2)}`],
+              ['Without ICU-time features', full.ablations.without_icu_time.toFixed(3), `and without recency: ${full.ablations.without_icu_time_and_recency.toFixed(3)}`],
+              ['Septic caught at SIRS’s alarm rate', full.alerting.model_at_sirs_false_alert_rate ? pct(full.alerting.model_at_sirs_false_alert_rate.sensitivity) : '—', `SIRS ${pct(full.alerting.baseline_sirs_rule.sensitivity)}`],
+              ['At a different hospital', fullAudit ? Object.values(fullAudit.cross_hospital).map((x) => x.auroc.toFixed(2)).join(' / ') : '—', 'train A → test B / B → A']].map(([t, val, s]) => (
+              <div key={t} className="rounded-xl bg-slate-950 p-3"><div className="text-[11px] text-slate-500">{t}</div><div className="text-xl font-bold text-slate-100">{val}</div><div className="text-[11px] text-slate-500">{s}</div></div>
+            ))}
+          </div>
+          <p className="mt-3 text-sm text-slate-300">The first run below used a 37% sample of these stays. This card uses every stay in PhysioNet training sets A and B with the identical pipeline, split and settings, so the two can be compared directly. Full tables are in <code>docs/FULL_DATA_RESULTS.md</code>.</p>
+        </div>
+      )}
       {real && (
         <div id="real" className="rounded-2xl border border-emerald-800/50 bg-slate-900/60 p-5">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
