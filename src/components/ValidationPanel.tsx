@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { Metrics, RealMetrics } from '../lib/model';
+import { Audit, AuditGroup, Metrics, RealMetrics } from '../lib/model';
 
 const pct = (v: number, d = 0) => `${(v * 100).toFixed(d)}%`;
 
 export const ValidationPanel: React.FC<{ m: Metrics }> = ({ m }) => {
   const [real, setReal] = useState<RealMetrics | null>(null);
+  const [audit, setAudit] = useState<Audit | null>(null);
+  useEffect(() => { fetch(`${import.meta.env.BASE_URL}audit_physionet.json`).then((r) => (r.ok ? r.json() : null)).then(setAudit).catch(() => setAudit(null)); }, []);
   useEffect(() => { fetch(`${import.meta.env.BASE_URL}metrics_physionet.json`).then((r) => r.json()).then(setReal).catch(() => setReal(null)); }, []);
   const a = m.alerting, W = 300, H = 220;
   const roc = m.roc.fpr.map((f, i) => `${30 + f * (W - 40)},${H - 24 - m.roc.tpr[i] * (H - 40)}`).join(' ');
@@ -19,8 +21,13 @@ export const ValidationPanel: React.FC<{ m: Metrics }> = ({ m }) => {
     <div className="space-y-5 p-4 md:p-6 max-w-7xl mx-auto">
       <div className="rounded-2xl border border-amber-700/40 bg-amber-950/20 p-4 text-sm text-amber-200">
         <b>Transparency:</b> {m.data} The cards below are a <b>method demonstration</b> on a patient-level held-out test cohort of {m.cohorts.test.toLocaleString()} simulated stays ({m.cohorts.test_septic} septic). Real-data results from the same pipeline are in the PhysioNet panel just below.</div>
+      <nav className="flex flex-wrap gap-2 text-sm" aria-label="Jump to section">
+        {[['#real', 'Real ICU data'], ['#audit', 'Other hospital + fairness'], ['#sim', 'Simulated demo']].map(([h, t]) => (
+          <a key={h} href={h} className="rounded-full border border-slate-700 bg-slate-900 px-3 py-1 font-medium text-cyan-300 transition-colors hover:border-cyan-400 hover:bg-cyan-950">{t}</a>
+        ))}
+      </nav>
       {real && (
-        <div className="rounded-2xl border border-emerald-800/50 bg-slate-900/60 p-5">
+        <div id="real" className="rounded-2xl border border-emerald-800/50 bg-slate-900/60 p-5">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
             <h3 className="font-semibold text-white">Real ICU data · AuraZ-R on PhysioNet 2019</h3>
             <span className="text-xs text-slate-400">{real.cohorts.test.toLocaleString()} held-out stays · {real.cohorts.test_septic} septic · {real.n_features} features · gradient-boosted trees</span>
@@ -42,13 +49,42 @@ export const ValidationPanel: React.FC<{ m: Metrics }> = ({ m }) => {
             </tbody>
           </table>
           <p className="mt-3 text-sm text-slate-300">
-            The simulated numbers above do not carry over one-to-one, so for real data we built AuraZ-R: all 34 clinical variables, how recently each was measured, trends and demographics.
+            The simulated numbers further down do not carry over one-to-one, so for real data we built AuraZ-R: all 34 clinical variables, how recently each was measured, trends and demographics.
             It reaches AUROC {real.auroc.toFixed(2)} on real held-out patients (still {real.ablations.without_icu_time.toFixed(2)} without ICU-time features) and keeps its uncertainty guarantee.
-            It is a 4,989-stay sample with {real.cohorts.test_septic} septic test stays, so the confidence interval is wide; this is research evidence, not clinical validation.
+            It was trained on {(real.cohorts.train + real.cohorts.calibration + real.cohorts.test).toLocaleString()} real stays and tested on {real.cohorts.test_septic} septic test stays; across hospitals it drops (see below), so treat this as research evidence, not clinical validation.
           </p>
         </div>
       )}
-      <div className="grid gap-5 md:grid-cols-4">
+      {audit && (
+        <div id="audit" className="rounded-2xl border border-slate-700 bg-slate-900/60 p-5">
+          <h3 className="font-semibold text-white">External validation and fairness audit · PhysioNet 2019</h3>
+          <p className="mt-1 text-sm text-slate-400">Hospitals A and B are different sites, so training on one and testing on the other is a real external test. {audit.n_stays.toLocaleString()} stays, {audit.septic} septic.</p>
+          <table className="mt-3 w-full text-sm font-mono">
+            <thead><tr className="text-left text-xs text-slate-500"><th className="py-1">Test</th><th>AUROC (95% CI)</th><th>Septic · non-septic coverage (target 90%)</th></tr></thead>
+            <tbody>
+              <tr className="border-t border-slate-800"><td className="py-2 text-slate-300">Same pool (random patients)</td><td className="text-emerald-400">{audit.pooled_split.auroc.toFixed(3)} ({audit.pooled_split.auroc_ci95[0]?.toFixed(2)}–{audit.pooled_split.auroc_ci95[1]?.toFixed(2)})</td><td className="text-slate-500">see above</td></tr>
+              {Object.entries(audit.cross_hospital).map(([k, x]) => (
+                <tr key={k} className="border-t border-slate-800"><td className="py-2 text-slate-300">{k.replace('train_', 'Train ').replace('_test_', ' → test ')} ({x.test_septic} septic)</td>
+                  <td className="text-amber-300">{x.auroc.toFixed(3)} ({x.auroc_ci95[0]?.toFixed(2)}–{x.auroc_ci95[1]?.toFixed(2)})</td>
+                  <td className="text-amber-300">{x.conformal.coverage_septic_hours !== null ? pct(x.conformal.coverage_septic_hours, 0) : '—'} · {pct(x.conformal.coverage_nonseptic_hours, 0)}</td></tr>
+              ))}
+            </tbody>
+          </table>
+          <p className="mt-2 text-xs text-slate-400">Across hospitals discrimination drops and the uncertainty guarantee weakens, so each hospital must recalibrate before use.</p>
+          <table className="mt-4 w-full text-sm font-mono">
+            <thead><tr className="text-left text-xs text-slate-500"><th className="py-1">Subgroup ({String(audit.subgroups.operating_point)})</th><th>Septic stays</th><th>AUROC</th><th>Alert rate</th><th>Septic hours alerted</th></tr></thead>
+            <tbody>
+              {Object.entries(audit.subgroups).filter(([k]) => k !== 'operating_point').map(([k, g]) => { const x = g as AuditGroup; return (
+                <tr key={k} className="border-t border-slate-800"><td className="py-1.5 text-slate-300">{k}</td><td className="text-slate-400">{x.septic_stays ?? '—'}</td>
+                  <td className="text-slate-200">{x.auroc !== undefined ? x.auroc.toFixed(3) : (x.note ?? '—')}</td>
+                  <td className="text-slate-400">{x.alert_rate_pct !== undefined ? `${x.alert_rate_pct.toFixed(1)}%` : '—'}</td>
+                  <td className="text-slate-400">{x.sensitivity_hour_pct !== undefined ? `${x.sensitivity_hour_pct.toFixed(0)}%` : '—'}</td></tr>); })}
+            </tbody>
+          </table>
+          <p className="mt-2 text-xs text-slate-400">Small subgroups have wide confidence intervals; differences here are a screening signal, not proof of bias.</p>
+        </div>
+      )}
+      <div id="sim" className="grid gap-5 md:grid-cols-4">
         {[['AUROC', m.auroc.toFixed(3), `95% CI ${m.auroc_ci95[0].toFixed(3)}–${m.auroc_ci95[1].toFixed(3)}`],
           ['AUPRC', m.auprc.toFixed(3), `prevalence ${pct(m.prevalence, 1)}`],
           ['Conformal coverage', `${pct(m.conformal.coverage_septic_hours, 1)} · ${pct(m.conformal.coverage_nonseptic_hours, 1)}`, `septic · non-septic hours, each targeting ${pct(m.conformal.target_coverage)} (class-conditional)`],
@@ -60,9 +96,9 @@ export const ValidationPanel: React.FC<{ m: Metrics }> = ({ m }) => {
         <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
           <div className="font-mono text-xs text-slate-400">ROC curve (hourly, 6 h horizon)</div>
           <svg viewBox={`0 0 ${W} ${H}`} className="mt-2 w-full">
-            <rect x="30" y="16" width={W - 40} height={H - 40} fill="none" stroke="#1e293b" />
-            <line x1="30" y1={H - 24} x2={W - 10} y2="16" stroke="#334155" strokeDasharray="4 4" />
-            <polyline points={roc} fill="none" stroke="#22d3ee" strokeWidth="2" />
+            <rect x="30" y="16" width={W - 40} height={H - 40} fill="none" stroke="#e5e8ee" />
+            <line x1="30" y1={H - 24} x2={W - 10} y2="16" stroke="#cbd2dc" strokeDasharray="4 4" />
+            <polyline points={roc} fill="none" stroke="#0f62fe" strokeWidth="2" />
             <text x={W / 2} y={H - 6} fontSize="9" fill="#64748b" textAnchor="middle">false-positive rate</text>
           </svg>
         </div>

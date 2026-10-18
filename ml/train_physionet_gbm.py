@@ -36,6 +36,12 @@ FEATURES = ([f"{v}" for v in VARS] + [f"{v}_hours_since" for v in VARS] +
             ["shock_index", "labs_measured_so_far"] + DEMO)
 
 def load(path):
+    try:
+        return _load(path)
+    except (IndexError, ValueError, KeyError):
+        return None  # truncated/partial file
+
+def _load(path):
     rows = [l.rstrip("\n").split("|") for l in open(path)]
     head, data = rows[0], rows[1:]
     if len(data) < 12:

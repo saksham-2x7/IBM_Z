@@ -58,6 +58,15 @@ export interface RealMetrics {
   top_features_by_gain: [string, number][];
 }
 
+export interface AuditGroup { stays?: number; septic_stays?: number; auroc?: number; auroc_ci95?: [number, number]; alert_rate_pct?: number; sensitivity_hour_pct?: number; coverage_septic_hours?: number; coverage_nonseptic_hours?: number; note?: string; rows?: number }
+export interface AuditXfer { train_stays: number; test_stays: number; test_septic: number; auroc: number; auroc_ci95: [number, number]; conformal: { coverage_septic_hours: number | null; coverage_nonseptic_hours: number; uncertain_fraction: number } }
+export interface Audit {
+  n_stays: number; septic: number;
+  cross_hospital: Record<string, AuditXfer>;
+  pooled_split: { test_stays: number; test_septic: number; auroc: number; auroc_ci95: [number, number] };
+  subgroups: Record<string, AuditGroup | string>;
+}
+
 export interface AlertStats {
   sensitivity: number;
   median_lead_h: number;
