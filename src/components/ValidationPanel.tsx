@@ -1,12 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import { Audit, AuditGroup, Metrics, RealMetrics } from '../lib/model';
 
+interface Recal { n_stays: number; directions: Record<string, { before: { coverage_septic: number; coverage_nonseptic: number }; after: Record<string, { coverage_septic_mean: number; coverage_nonseptic_mean: number; uncertain_fraction_mean: number }> }> }
+
 const pct = (v: number, d = 0) => `${(v * 100).toFixed(d)}%`;
 
 export const ValidationPanel: React.FC<{ m: Metrics }> = ({ m }) => {
   const [real, setReal] = useState<RealMetrics | null>(null);
   const [audit, setAudit] = useState<Audit | null>(null);
   const [full, setFull] = useState<RealMetrics | null>(null);
+  const [recal, setRecal] = useState<Recal | null>(null);
+  useEffect(() => {
+    fetch(`${import.meta.env.BASE_URL}full/recalibration.json`).then((r) => (r.ok ? r.json() : Promise.reject())).catch(() => fetch(`${import.meta.env.BASE_URL}recalibration.json`).then((r) => (r.ok ? r.json() : null))).then(setRecal).catch(() => setRecal(null));
+  }, []);
   const [fullAudit, setFullAudit] = useState<Audit | null>(null);
   useEffect(() => {
     fetch(`${import.meta.env.BASE_URL}full/metrics_physionet.json`).then((r) => (r.ok ? r.json() : null)).then(setFull).catch(() => setFull(null));
@@ -105,6 +111,23 @@ export const ValidationPanel: React.FC<{ m: Metrics }> = ({ m }) => {
             </tbody>
           </table>
           <p className="mt-2 text-xs text-slate-400">Small subgroups have wide confidence intervals; differences here are a screening signal, not proof of bias.</p>
+        </div>
+      )}
+      {recal && (
+        <div id="recal" className="rounded-2xl border border-slate-700 bg-slate-900/60 p-5">
+          <h3 className="font-semibold text-white">Fixing the uncertainty guarantee at a new hospital</h3>
+          <p className="mt-1 text-sm text-slate-400">The model is not retrained. Only the uncertainty thresholds are recalibrated using a small number of stays from the new hospital (mean of 20 random draws, tested on the rest of that hospital).</p>
+          <table className="mt-3 w-full text-sm">
+            <thead><tr className="text-left text-xs text-slate-500"><th className="py-1">Direction</th><th>Stays used to recalibrate</th><th>Septic coverage</th><th>Non-septic coverage</th><th>Says “uncertain”</th></tr></thead>
+            <tbody>
+              {Object.entries(recal.directions).flatMap(([k, d]) => [
+                <tr key={k + 'b'} className="border-t border-slate-800"><td className="py-1.5 text-slate-300">{k.replace('train_', 'Train ').replace('_test_', ' → test ')}</td><td className="text-amber-300">none (before)</td><td className="text-amber-300">{pct(d.before.coverage_septic)}</td><td className="text-amber-300">{pct(d.before.coverage_nonseptic)}</td><td className="text-slate-500">—</td></tr>,
+                ...Object.entries(d.after).filter(([kk]) => ['100', '200', '400'].includes(kk)).map(([kk, a]) => (
+                  <tr key={k + kk} className="border-t border-slate-800"><td className="py-1.5 text-slate-500">&nbsp;</td><td className="text-slate-300">{kk} stays</td><td className="font-semibold text-emerald-400">{pct(a.coverage_septic_mean)}</td><td className="font-semibold text-emerald-400">{pct(a.coverage_nonseptic_mean)}</td><td className="text-slate-400">{pct(a.uncertain_fraction_mean)}</td></tr>)),
+              ])}
+            </tbody>
+          </table>
+          <p className="mt-2 text-xs text-slate-400">Target is 90% for both classes. A few hundred local stays restore it, at the cost of the model abstaining (“uncertain”) more often. With 25–50 stays the septic coverage is still unreliable.</p>
         </div>
       )}
       <div id="sim" className="grid gap-5 md:grid-cols-4">

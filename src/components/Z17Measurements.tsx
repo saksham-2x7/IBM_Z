@@ -9,6 +9,7 @@ interface Nnpa {
   kernel_benchmark: { results: Kernel[] } | null; notes: string[]; cpu_openblas?: { threads: number; ms: number; nnpa_speedup_total: number; nnpa_speedup_compute: number }[];
 }
 interface LoadRes { clients: number; batch: number; scores_per_s: number; p50_ms: number; p99_ms: number; requests_per_s: number }
+interface Conc { host: { cpus: number }; seconds_per_level: number; results: { connections: number; requests: number; success_pct: number; p50_ms: number; p99_ms: number; errors: number }[] }
 interface Load { host: { system: string; cpus: number }; workers_1: { results: LoadRes[]; peak: LoadRes }; workers_2: { results: LoadRes[]; peak: LoadRes }; note: string }
 
 const base = import.meta.env.BASE_URL;
@@ -17,8 +18,9 @@ const get = <T,>(f: string, set: (v: T | null) => void) => fetch(`${base}${f}`).
 export const Z17Measurements: React.FC = () => {
   const [n, setN] = useState<Nnpa | null>(null);
   const [l, setL] = useState<Load | null>(null);
-  useEffect(() => { get<Nnpa>('nnpa_z17.json', setN); get<Load>('loadtest_z17.json', setL); }, []);
-  if (!n && !l) return null;
+  const [cc, setCc] = useState<Conc | null>(null);
+  useEffect(() => { get<Nnpa>('nnpa_z17.json', setN); get<Load>('loadtest_z17.json', setL); get<Conc>('concurrency_z17.json', setCc); }, []);
+  if (!n && !l && !cc) return null;
   const row1 = l?.workers_1.results.find((r) => r.batch === 1 && r.clients === 1);
   return (
     <div className="space-y-5">
@@ -67,6 +69,20 @@ export const Z17Measurements: React.FC = () => {
             ))}
           </div>
           <p className="mt-3 text-xs text-slate-400">The test also caught a real bug: single requests were stuck at a flat 50 ms by a TCP delayed-ACK stall. One line (<code>TCP_NODELAY</code>) brought the median to {row1 ? `${row1.p50_ms} ms` : 'under a millisecond'}. At that rate the compute alone could score about {Math.floor((l.workers_2.peak.scores_per_s * 3600) / 200).toLocaleString()} 200-bed wards every hour (before feature extraction and I/O).</p>
+        </div>
+      )}
+
+      {cc && (
+        <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6">
+          <div className="flex items-center gap-2"><Gauge className="h-5 w-5 text-cyan-400" aria-hidden="true" /><h2 className="text-lg font-bold text-white">Many monitors at once, on the z17</h2></div>
+          <p className="mt-1 text-sm text-slate-400">Each connection behaves like one bedside monitor sending a patient-hour every second to the 300-tree model, for {cc.seconds_per_level} seconds, on the same {cc.host.cpus}-vCPU VM.</p>
+          <table className="mt-3 w-full text-sm">
+            <thead><tr className="text-left text-xs text-slate-500"><th className="py-1">Simultaneous connections</th><th>Requests</th><th>Success</th><th>Median</th><th>p99</th></tr></thead>
+            <tbody>{cc.results.map((r) => (
+              <tr key={r.connections} className="border-t border-slate-800"><td className="py-1.5 font-semibold text-slate-200">{r.connections.toLocaleString()}</td><td className="text-slate-400">{r.requests.toLocaleString()}</td>
+                <td className={r.errors === 0 ? 'font-semibold text-emerald-400' : 'text-amber-300'}>{r.success_pct}%</td><td className="text-slate-400">{r.p50_ms} ms</td><td className="text-slate-400">{r.p99_ms} ms</td></tr>))}</tbody>
+          </table>
+          <p className="mt-3 text-xs text-slate-400">The first run showed 2 to 3 failed requests at 500 and 2,000 connections. The cause was the server's default listen backlog of 5, so a burst of new connections was refused. Raising it to 1,024 removed every error. The load generator shares the VM, so this is conservative; it is not a test of a real hospital network.</p>
         </div>
       )}
     </div>

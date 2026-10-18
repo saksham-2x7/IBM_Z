@@ -166,3 +166,18 @@ describe.skipIf(!existsSync(new URL('../public/full/metrics_physionet.json', imp
     expect(Math.abs(fm().conformal.coverage_nonseptic_hours - 0.9)).toBeLessThan(0.06);
   });
 });
+
+describe('z17 concurrency and recalibration results', () => {
+  it('concurrency: every level reached 2,000 connections with at least 99.9% success', () => {
+    const cc = load<{ results: { connections: number; success_pct: number; p99_ms: number }[] }>('concurrency_z17.json');
+    expect(Math.max(...cc.results.map((r) => r.connections))).toBeGreaterThanOrEqual(2000);
+    for (const r of cc.results) { expect(r.success_pct).toBeGreaterThanOrEqual(99.9); expect(r.p99_ms).toBeLessThan(100); }
+  });
+  it('recalibration with 200+ stays brings coverage within 0.06 of target in both directions', () => {
+    const rc = load<{ directions: Record<string, { after: Record<string, { coverage_septic_mean: number; coverage_nonseptic_mean: number }> }> }>('recalibration.json');
+    for (const d of Object.values(rc.directions)) for (const k of ['200', '400']) {
+      expect(Math.abs(d.after[k].coverage_septic_mean - 0.9)).toBeLessThan(0.06);
+      expect(Math.abs(d.after[k].coverage_nonseptic_mean - 0.9)).toBeLessThan(0.06);
+    }
+  });
+});
