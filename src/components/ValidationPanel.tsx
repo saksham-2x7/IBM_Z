@@ -44,7 +44,7 @@ export const ValidationPanel: React.FC<{ m: Metrics }> = ({ m }) => {
             </tbody>
           </table>
           <p className="mt-3 text-sm text-slate-300">
-            The simulated numbers above do not carry over one-to-one, so for real data we built AuraZ-R: all 34 clinical variables, how recently each was measured, trends and demographics.
+            The simulated numbers further down do not carry over one-to-one, so for real data we built AuraZ-R: all 34 clinical variables, how recently each was measured, trends and demographics.
             It reaches AUROC {real.auroc.toFixed(2)} on real held-out patients (still {real.ablations.without_icu_time.toFixed(2)} without ICU-time features) and keeps its uncertainty guarantee.
             It was trained on {(real.cohorts.train + real.cohorts.calibration + real.cohorts.test).toLocaleString()} real stays and tested on {real.cohorts.test_septic} septic test stays; across hospitals it drops (see below), so treat this as research evidence, not clinical validation.
           </p>
@@ -91,9 +91,9 @@ export const ValidationPanel: React.FC<{ m: Metrics }> = ({ m }) => {
         <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
           <div className="font-mono text-xs text-slate-400">ROC curve (hourly, 6 h horizon)</div>
           <svg viewBox={`0 0 ${W} ${H}`} className="mt-2 w-full">
-            <rect x="30" y="16" width={W - 40} height={H - 40} fill="none" stroke="#1e293b" />
-            <line x1="30" y1={H - 24} x2={W - 10} y2="16" stroke="#334155" strokeDasharray="4 4" />
-            <polyline points={roc} fill="none" stroke="#22d3ee" strokeWidth="2" />
+            <rect x="30" y="16" width={W - 40} height={H - 40} fill="none" stroke="#e5e8ee" />
+            <line x1="30" y1={H - 24} x2={W - 10} y2="16" stroke="#cbd2dc" strokeDasharray="4 4" />
+            <polyline points={roc} fill="none" stroke="#1d5fb4" strokeWidth="2" />
             <text x={W / 2} y={H - 6} fontSize="9" fill="#64748b" textAnchor="middle">false-positive rate</text>
           </svg>
         </div>

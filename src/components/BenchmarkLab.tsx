@@ -128,7 +128,7 @@ cd ~/auraz && nohup python3 ml/serve.py 8080 > serve.log 2>&1 &`}</pre>
         </details>
       </div>
       <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6">
-        <span className="rounded bg-cyan-950 px-2 py-0.5 font-mono text-xs font-semibold text-cyan-400 border border-cyan-800/50">MEASURED, NOT CLAIMED</span>
+        <span className="rounded bg-cyan-950 px-2 py-0.5 font-mono text-xs font-semibold text-cyan-400 border border-cyan-800/50">Measured, not claimed</span>
         <h2 className="mt-2 text-2xl font-bold font-mono text-white">Latency lab: in-process inference vs a cloud round trip</h2>
         <p className="mt-1 text-sm text-slate-400 max-w-3xl">Run the real exported model on this device. In-process scoring has no network hop; IBM Z lets that scoring sit beside the transactional data itself. The cloud path is a model you can tune: it is an assumption, not a measurement.</p>
         <button onClick={run} disabled={busy} className="mt-4 flex items-center gap-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 px-5 py-3 text-sm font-bold text-slate-950 disabled:opacity-50">

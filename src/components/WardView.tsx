@@ -167,9 +167,7 @@ export const WardView: React.FC<Props> = ({ model, remote, remoteLabel, onSelect
       <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
         <div>
           <div className="flex items-center gap-2">
-            <span className="rounded bg-cyan-950 px-2 py-0.5 font-mono text-xs font-semibold text-cyan-400 border border-cyan-800/50">
-              WARD SURVEILLANCE
-            </span>
+            <span className="text-xs font-medium text-cyan-400">Ward surveillance</span>
             <span className="text-xs text-slate-400">· Click any bed tile to open patient in Live Replay</span>
           </div>
           <h2 className="mt-1.5 text-lg font-bold text-white tracking-tight">Ward View · 200 Held-Out ICU Stays</h2>
@@ -286,7 +284,7 @@ export const WardView: React.FC<Props> = ({ model, remote, remoteLabel, onSelect
         <div className="flex flex-col justify-between rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
           <div>
             <div className="flex items-center justify-between">
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-400">Highest Risk Now</h3>
+              <h3 className="text-xs font-semibold text-slate-400">Highest Risk Now</h3>
               <span className="text-[11px] text-slate-400">Click row to replay</span>
             </div>
             <ol className="mt-3 space-y-2">
