@@ -6,7 +6,31 @@ import html, os, re, subprocess, sys, tempfile
 
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
 SRC, OUT = os.path.join(ROOT, "docs", "whitepaper.md"), os.path.join(ROOT, "docs", "AuraZ_Whitepaper.pdf")
-CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+def find_chrome():
+    if os.environ.get("CHROME_PATH"):
+        return os.environ["CHROME_PATH"]
+    candidates = [
+        "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+        r"C:\Program Files\Google\Chrome\Application\chrome.exe",
+        r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
+        r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
+        r"C:\Program Files\Microsoft\Edge\Application\msedge.exe",
+        "/usr/bin/google-chrome",
+        "/usr/bin/chromium",
+        "/usr/bin/chromium-browser",
+    ]
+    for c in candidates:
+        if os.path.isfile(c):
+            return c
+    import shutil
+    for cmd in ["google-chrome", "chromium", "chromium-browser"]:
+        p = shutil.which(cmd)
+        if p:
+            return p
+    print("Error: No compatible browser (Chrome/Chromium/Edge) found. Set CHROME_PATH.", file=sys.stderr)
+    sys.exit(1)
+
+CHROME = find_chrome()
 
 def inline(s):
     s = html.escape(s, quote=False)

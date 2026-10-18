@@ -2,15 +2,43 @@
 //   npm run dev            # app on :5174
 //   (optional) ssh -N -L 8080:localhost:8080 ... # IBM Z inference service reachable on :8080
 //   node scripts/capture_demo.mjs [appUrl] [endpoint]
-import { spawn } from 'node:child_process';
-import { mkdtempSync, writeFileSync } from 'node:fs';
+import { spawn, spawnSync } from 'node:child_process';
+import { existsSync, mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+function findChrome() {
+  if (process.env.CHROME_PATH) return process.env.CHROME_PATH;
+  const candidates = [
+    '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+    'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+    'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
+    'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe',
+    'C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe',
+    '/usr/bin/google-chrome',
+    '/usr/bin/chromium',
+    '/usr/bin/chromium-browser',
+  ];
+  for (const c of candidates) {
+    if (existsSync(c)) return c;
+  }
+  for (const cmd of ['google-chrome', 'chromium', 'chromium-browser']) {
+    try {
+      const res = spawnSync(process.platform === 'win32' ? 'where' : 'which', [cmd], { stdio: 'pipe', encoding: 'utf-8' });
+      if (res.status === 0 && res.stdout.trim()) {
+        return res.stdout.trim().split(/\r?\n/)[0];
+      }
+    } catch {}
+  }
+  console.error('Error: No compatible browser (Chrome/Chromium/Edge) found. Set CHROME_PATH to your browser executable.');
+  process.exit(1);
+}
 
 const APP = process.argv[2] ?? 'http://localhost:5174/';
 const ENDPOINT = process.argv[3] ?? 'http://localhost:8080';
-const OUT = new URL('../docs/demo/', import.meta.url).pathname;
-const CHROME = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+const OUT = fileURLToPath(new URL('../docs/demo/', import.meta.url));
+const CHROME = findChrome();
 const PORT = 9333;
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
