@@ -67,6 +67,7 @@ const H = `const w=(ms)=>new Promise(r=>setTimeout(r,ms));
 const tab=async(n)=>{const b=[...document.querySelectorAll('[role=tab]')].find(x=>x.textContent.includes(n)); if(!b) throw new Error('no tab '+n); b.click(); await w(1200);};
 const btn=(t)=>[...document.querySelectorAll('button')].find(b=>b.textContent.trim().startsWith(t));
 const txt=()=>document.querySelector('main').innerText;
+const until=async(re,ms=60000)=>{const t0=Date.now(); while(Date.now()-t0<ms){ if(re.test(txt())) return true; await w(250);} return false;};
 const setRange=async(v)=>{const s=document.querySelector('main input[type=range]'); Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(s,String(v)); s.dispatchEvent(new Event('input',{bubbles:true})); s.dispatchEvent(new Event('change',{bubbles:true})); await w(500);};`;
 
 try {
@@ -124,11 +125,11 @@ try {
   await ev(`${H} const i=document.querySelector('input[placeholder^="http"]'); Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(i,'http://localhost:${SERVER_PORT}'); i.dispatchEvent(new Event('input',{bubbles:true})); btn('Connect').click(); await w(2500);`);
   const conn = await ev(`${H} return txt().match(/connected · [^\\n]*/)?.[0] ?? 'none'`);
   check('IBM Z: connects to inference service', /connected/.test(conn), conn);
-  const bench = await ev(`${H} btn('Benchmark remote').click(); await w(8000); return txt();`);
+  const bench = await ev(`${H} btn('Benchmark remote').click(); await until(/Max \\|remote − local\\|\\n0\\.0e\\+0/); return txt();`);
   check('IBM Z: remote benchmark matches local exactly', /Max \|remote − local\|\n0\.0e\+0/.test(bench));
-  const real = await ev(`${H} btn('Run AuraZ-R').click(); await w(7000); return txt();`);
+  const real = await ev(`${H} btn('Run AuraZ-R').click(); await until(/Max \\|browser − sklearn\\|\\n0\\.0e\\+0/); return txt();`);
   check('IBM Z: real-data trees match sklearn exactly', /Max \|browser − sklearn\|\n0\.0e\+0/.test(real) && /Max \|remote − browser\|\n0\.0e\+0/.test(real));
-  const lat = await ev(`${H} btn('Score 100,000').click(); await w(3000); return txt();`);
+  const lat = await ev(`${H} btn('Score 100,000').click(); await until(/µs/); return txt();`);
   check('IBM Z: in-browser latency lab runs', /MEAN \/ INFERENCE/.test(lat) || /µs/.test(lat));
   await ev(`${H} await tab('Live Replay'); [...document.querySelectorAll('main button')].find(x=>x.textContent.includes('TEST-01')).click(); await w(2500);`);
   check('Live Replay scores on the connected host', /Scored on/.test(await ev(`${H} return txt()`)) && !/Scored in browser/.test(await ev(`${H} return txt()`)));
