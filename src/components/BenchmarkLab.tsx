@@ -160,7 +160,7 @@ cd ~/auraz && nohup python3 ml/serve.py 8080 > serve.log 2>&1 &`}</pre>
       <div className="flex gap-3 rounded-2xl border border-slate-800 bg-slate-900/60 p-5 text-sm text-slate-300">
         <Info className="mt-0.5 h-5 w-5 shrink-0 text-cyan-400" />
         <div>
-          <b>Why this matters for IBM Z:</b> at hospital scale, scoring happens inside the transaction path where the monitor data already lives, so there is no network hop to tune, throttle or leak. Measured on a real IBM z17 through the LinuxONE Community Cloud. The inference service runs on the CPU; the accelerator results above come from a neural variant (AuraZ-N) run through IBM's zDNN library.
+          <b>Why this matters for IBM Z:</b> at hospital scale, scoring happens inside the transaction path where the monitor data already lives, so there is no network hop to tune, throttle or leak. Measured on a real IBM z17 through the LinuxONE Community Cloud. The inference service runs on the CPU; the accelerator results above (vs a plain loop and vs OpenBLAS) come from a neural variant (AuraZ-N) run through IBM's zDNN library.
         </div>
       </div>
     </div>
