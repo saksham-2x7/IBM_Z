@@ -103,6 +103,10 @@ AUDIT = os.environ.get("AURAZ_AUDIT", os.path.join(os.path.dirname(os.path.abspa
 def audit(entry):
     with open(AUDIT, "a") as f: f.write(json.dumps(entry) + "\n")
 
+class Server(ThreadingHTTPServer):
+    request_queue_size = 1024  # default backlog is 5: a burst of new connections (many monitors reconnecting) gets refused
+    daemon_threads = True
+
 class H(BaseHTTPRequestHandler):
     protocol_version = "HTTP/1.1"  # keep-alive: one TCP connection for many requests
     disable_nagle_algorithm = True  # headers and body are separate writes: without TCP_NODELAY Nagle + delayed ACK adds ~40-50 ms per request
@@ -144,7 +148,7 @@ class H(BaseHTTPRequestHandler):
 if __name__ == "__main__":
     port = int(sys.argv[1]) if len(sys.argv) > 1 else 8080
     workers = int(sys.argv[2]) if len(sys.argv) > 2 else 1  # prefork: N processes share one listening socket (uses all cores)
-    srv = ThreadingHTTPServer(("0.0.0.0", port), H)
+    srv = Server(("0.0.0.0", port), H)
     print(f"AuraZ inference on {HOST['system']} [{HOST['arch']}] machine={HOST['machine']} nnpa={HOST['nnpa']} workers={workers} -> :{port}", flush=True)
     for _ in range(workers - 1):
         if os.fork() == 0:

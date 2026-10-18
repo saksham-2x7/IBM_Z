@@ -5,5 +5,6 @@ cd "$(dirname "$0")/.."
 mkdir -p public/full
 AURAZ_OUT=public/full python3 -W ignore ml/train_physionet_gbm.py
 AURAZ_OUT=public/full python3 -W ignore ml/audit_physionet.py
+AURAZ_OUT=public/full python3 -W ignore ml/recalibrate_physionet.py
 python3 scripts/make_full_report.py
 python3 scripts/make_model_card.py
