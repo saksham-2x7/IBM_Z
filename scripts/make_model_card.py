@@ -47,7 +47,7 @@ if aud:
 mlp = j("metrics_mlp.json"); nn = j("nnpa_z17.json"); lt = j("loadtest_z17.json")
 add("## AuraZ-N on the Telum II accelerator (IBM z17, zDNN)\n")
 add(f"Neural variant (108→64→32→1, {mlp['parameters']:,} parameters), AUROC **{mlp['auroc']:.3f}** ({ci(mlp['auroc_ci95'])}) on the same held-out stays as AuraZ-R. Run on the on-chip accelerator: **{nn['timing']['nnpa_total_ms']:.1f} ms vs {nn['timing']['cpu_fp32_ms']:.0f} ms** for {nn['rows']:,} patient-hours "
-    f"(**{nn['timing']['speedup_total_vs_cpu']:.1f}×**, naive single-thread CPU loop as baseline). AUROC on the accelerator {nn['auroc_on_nnpa']:.5f} vs {nn['auroc_fp32_sklearn']:.5f} in FP32; {100 * nn['alert_agreement_at_threshold']:.3f}% identical alert decisions; largest probability difference {nn['max_abs_prob_diff']:.5f} (16-bit arithmetic). "
+    f"(**{nn['timing']['speedup_total_vs_cpu']:.1f}×** vs a plain single-thread CPU loop; **{nn['cpu_openblas'][0]['nnpa_speedup_total']:.1f}×** vs OpenBLAS on one thread, {nn['cpu_openblas'][-1]['nnpa_speedup_total']:.1f}× vs both threads). AUROC on the accelerator {nn['auroc_on_nnpa']:.5f} vs {nn['auroc_fp32_sklearn']:.5f} in FP32; {100 * nn['alert_agreement_at_threshold']:.3f}% identical alert decisions; largest probability difference {nn['max_abs_prob_diff']:.5f} (16-bit arithmetic). "
     "A 16-feature logistic regression is 2-4x *slower* on the accelerator (too small), and tree models are not an accelerator workload. See `docs/NNPA.md`.\n")
 add("## Serving load test (IBM z17, 2 vCPUs, pure Python, CPU)\n")
 add(f"AuraZ-R behind `ml/serve.py`: peak **{lt['workers_2']['peak']['scores_per_s']:,} scores/s** with 2 workers ({lt['workers_1']['peak']['scores_per_s']:,} with 1), p50 {lt['workers_2']['peak']['p50_ms']} ms at batch {lt['workers_2']['peak']['batch']}. Load generator shares the VM, so figures are conservative.\n")
@@ -55,7 +55,7 @@ add("## Limitations\n"
     "- Headline demo numbers are simulated. Real-data results come from retrospective PhysioNet 2019 data from two US hospitals.\n"
     "- Measurement-recency features partly encode clinician behaviour; ICU length of stay is the top feature (AUROC without it is reported above).\n"
     "- No prospective validation, no regulatory clearance, no race/ethnicity audit.\n"
-    "- AuraZ-R (trees) runs on the z17 CPU. AuraZ-N (neural variant, AUROC 0.80) runs on the Telum II NNPA accelerator at no AUROC cost, but it is less accurate than AuraZ-R; the CPU baseline in the speed-up claim is a naive loop (see docs/NNPA.md).\n")
+    "- AuraZ-R (trees) runs on the z17 CPU. AuraZ-N (neural variant, AUROC 0.80) runs on the Telum II NNPA accelerator at no AUROC cost, but it is less accurate than AuraZ-R; the headline 33x is against a plain loop, about 1.2-1.5x against tuned OpenBLAS (see docs/NNPA.md).\n")
 add("## Reproduce\n```bash\npython3 ml/train.py                 # demo model + simulated metrics\npython3 ml/train_physionet_gbm.py   # AuraZ-R (needs data/physionet2019/)\npython3 ml/audit_physionet.py       # external validation + subgroups\nnpm test && python3 -m unittest ml/test_serve.py\n```\n")
 open(os.path.join(R, "docs", "MODEL_CARD.md"), "w").write("\n".join(L))
 print("wrote docs/MODEL_CARD.md")

@@ -76,7 +76,7 @@ try {
   // ---- IBM Z
   await ev(`${H} await tab('IBM Z');`);
   const rec = await ev(`${H} return txt();`);
-  check('IBM Z: recorded accelerator (NNPA) results shown', /Telum II accelerator \(NNPA\), measured on the z17/.test(rec) && /faster than the CPU loop/.test(rec));
+  check('IBM Z: recorded accelerator (NNPA) results shown', /Telum II accelerator \(NNPA\), measured on the z17/.test(rec) && /faster than a plain CPU loop/.test(rec));
   check('IBM Z: recorded load-test results shown', /Load test on the z17/.test(rec) && /scores per second, peak/.test(rec));
   const bad = await ev(`${H} const i=document.querySelector('input[placeholder^="http"]'); Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(i,'http://localhost:9'); i.dispatchEvent(new Event('input',{bubbles:true})); btn('Connect').click(); await w(2500); return [/not connected/.test(txt()), btn('Benchmark remote').disabled];`);
   check('IBM Z: unreachable endpoint fails gracefully', bad[0] && bad[1]);

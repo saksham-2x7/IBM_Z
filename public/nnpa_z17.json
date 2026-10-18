@@ -139,9 +139,23 @@
    }
   ]
  },
+ "cpu_openblas": [
+  {
+   "threads": 1,
+   "ms": 15.944,
+   "nnpa_speedup_total": 1.4627522935779818,
+   "nnpa_speedup_compute": 2.1134676564156947
+  },
+  {
+   "threads": 2,
+   "ms": 12.659,
+   "nnpa_speedup_total": 1.161376146788991,
+   "nnpa_speedup_compute": 1.6780222693531286
+  }
+ ],
  "notes": [
   "NNPA computes in 16-bit DLFLOAT16; outputs differ slightly from FP32.",
-  "CPU baseline is a naive single-thread C loop (-O2), not an optimised BLAS, so speedups overstate the gain over a tuned CPU library.",
+  "The 32.6x figure is against a naive single-thread C loop. Against OpenBLAS (vector-tuned for s390x) the accelerator is about 1.5x faster than 1 CPU thread and 1.2x faster than both CPU threads on this 2-vCPU VM.",
   "AuraZ-R (gradient-boosted trees) is a CPU model; tree ensembles are not an NNPA workload."
  ],
  "alert_threshold_top5pct": 0.029669051989912987

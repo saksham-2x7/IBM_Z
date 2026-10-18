@@ -49,7 +49,7 @@ alert if risk >= 0.0391 (top 5% of all held-out patient-hours). Subgroups have f
 
 ## AuraZ-N on the Telum II accelerator (IBM z17, zDNN)
 
-Neural variant (108→64→32→1, 9,089 parameters), AUROC **0.800** (0.77–0.83) on the same held-out stays as AuraZ-R. Run on the on-chip accelerator: **10.9 ms vs 355 ms** for 32,768 patient-hours (**32.6×**, naive single-thread CPU loop as baseline). AUROC on the accelerator 0.80858 vs 0.80859 in FP32; 99.994% identical alert decisions; largest probability difference 0.00065 (16-bit arithmetic). A 16-feature logistic regression is 2-4x *slower* on the accelerator (too small), and tree models are not an accelerator workload. See `docs/NNPA.md`.
+Neural variant (108→64→32→1, 9,089 parameters), AUROC **0.800** (0.77–0.83) on the same held-out stays as AuraZ-R. Run on the on-chip accelerator: **10.9 ms vs 355 ms** for 32,768 patient-hours (**32.6×** vs a plain single-thread CPU loop; **1.5×** vs OpenBLAS on one thread, 1.2× vs both threads). AUROC on the accelerator 0.80858 vs 0.80859 in FP32; 99.994% identical alert decisions; largest probability difference 0.00065 (16-bit arithmetic). A 16-feature logistic regression is 2-4x *slower* on the accelerator (too small), and tree models are not an accelerator workload. See `docs/NNPA.md`.
 
 ## Serving load test (IBM z17, 2 vCPUs, pure Python, CPU)
 
@@ -59,7 +59,7 @@ AuraZ-R behind `ml/serve.py`: peak **11,870 scores/s** with 2 workers (6,492 wit
 - Headline demo numbers are simulated. Real-data results come from retrospective PhysioNet 2019 data from two US hospitals.
 - Measurement-recency features partly encode clinician behaviour; ICU length of stay is the top feature (AUROC without it is reported above).
 - No prospective validation, no regulatory clearance, no race/ethnicity audit.
-- AuraZ-R (trees) runs on the z17 CPU. AuraZ-N (neural variant, AUROC 0.80) runs on the Telum II NNPA accelerator at no AUROC cost, but it is less accurate than AuraZ-R; the CPU baseline in the speed-up claim is a naive loop (see docs/NNPA.md).
+- AuraZ-R (trees) runs on the z17 CPU. AuraZ-N (neural variant, AUROC 0.80) runs on the Telum II NNPA accelerator at no AUROC cost, but it is less accurate than AuraZ-R; the headline 33x is against a plain loop, about 1.2-1.5x against tuned OpenBLAS (see docs/NNPA.md).
 
 ## Reproduce
 ```bash

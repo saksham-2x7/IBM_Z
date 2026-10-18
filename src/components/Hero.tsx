@@ -23,7 +23,7 @@ export const Hero: React.FC<Props> = ({ setTab, connected, hostLabel }) => {
     { Icon: TrendingUp, big: real ? real.auroc.toFixed(2) : '—', label: 'AUROC on real ICU data', sub: real ? `${real.cohorts.test.toLocaleString()} held-out PhysioNet stays` : '' },
     { Icon: ShieldCheck, big: m && real ? `${Math.round(m.sensitivity * 100)}% vs ${Math.round(real.alerting.baseline_sirs_rule.sensitivity * 100)}%` : '—', label: 'septic patients caught early', sub: 'AuraZ-R vs SIRS at the same alarm rate' },
     { Icon: Globe2, big: xfer.length ? (xfer.reduce((a, b) => a + b, 0) / xfer.length).toFixed(2) : '—', label: 'AUROC at a new hospital', sub: 'honest cross-hospital test' },
-    { Icon: Server, big: connected ? 'Live' : nnpa ? `${Math.round(nnpa.timing.speedup_total_vs_cpu)}×` : 'z17', label: connected ? hostLabel : 'Telum II accelerator speed-up', sub: connected ? 'scoring on the mainframe now' : 'neural model on the z17; AUROC unchanged' },
+    { Icon: Server, big: connected ? 'Live' : nnpa ? `${Math.round(nnpa.timing.speedup_total_vs_cpu)}×` : 'z17', label: connected ? hostLabel : 'Telum II accelerator speed-up', sub: connected ? 'scoring on the mainframe now' : 'vs a plain CPU loop (1.5× vs tuned OpenBLAS); AUROC unchanged' },
   ];
 
   return (
