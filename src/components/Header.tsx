@@ -1,7 +1,7 @@
 import React, { useRef } from 'react';
 import { Activity, CheckCircle2, Server } from 'lucide-react';
 
-export type Tab = 'replay' | 'ward' | 'validation' | 'ibmz' | 'architecture' | 'submission';
+export type Tab = 'replay' | 'ward' | 'validation' | 'ibmz' | 'architecture';
 
 const TABS: [Tab, string][] = [
   ['replay', 'Live Replay'],
@@ -9,7 +9,6 @@ const TABS: [Tab, string][] = [
   ['validation', 'Validation'],
   ['ibmz', 'IBM Z'],
   ['architecture', 'Architecture'],
-  ['submission', 'Submission'],
 ];
 
 interface Props {

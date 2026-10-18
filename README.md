@@ -47,7 +47,7 @@ python3 ml/serve.py 8080
 
 If port 8080 is not reachable, tunnel it: `ssh -N -L 8080:localhost:8080 -i key.pem linux1@<VM-IP>`. Then open the **IBM Z** tab, enter `http://localhost:8080` (or the VM address), and press Connect. Live Replay and Ward now score on the mainframe.
 
-Tabs: **Live Replay** · **Ward** (200 beds) · **Validation** · **IBM Z** · Architecture · Submission.
+Tabs: **Live Replay** · **Ward** (200 beds) · **Validation** · **IBM Z** · Architecture.
 
 ## Verified on IBM LinuxONE
 
