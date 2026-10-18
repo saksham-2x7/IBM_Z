@@ -1,0 +1,18 @@
+{
+ "model": "AuraZ-N: MLP 108-64-32-1 (ReLU, sigmoid), median-imputed, log-scaled and clipped standardised inputs; hyperparameters chosen on the calibration split",
+ "cohorts": {
+  "train": 8781,
+  "test": 2927,
+  "test_septic": 175
+ },
+ "auroc": 0.800410838296317,
+ "auroc_ci95": [
+  0.7741258642441943,
+  0.8265738072159714
+ ],
+ "auroc_sklearn_subsample": 0.8085856032245287,
+ "subsample_rows": 32768,
+ "parameters": 9089,
+ "epochs": 12,
+ "reference": "AuraZ-R (gradient-boosted trees) AUROC is in metrics_physionet.json"
+}

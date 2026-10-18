@@ -54,7 +54,7 @@ We checked. ICU length of stay is the top split feature, so we retrained without
 `ml/serve.py`, our inference service, on the IBM LinuxONE Community Cloud. The host reports an IBM z17 (machine type 9175, Telum II) with the `nnpa` flag. The app connected to it, scored real requests, and the remote results matched the browser's reference results exactly.
 
 **16. Did you use the Telum II AI accelerator?**
-No. Both models ran on the CPU in pure Python: about 12 µs per request for the demo model and about 150–200 µs per patient-hour for the 300-tree real-data model (final model), with remote results matching the reference exactly. The NNPA path (ONNX, then the IBM Z Deep Learning Compiler) is our next step.
+Yes, for a neural variant. AuraZ-N (a 108→64→32→1 network, AUROC 0.80 on real data) runs on the on-chip NNPA accelerator through IBM's zDNN library: 32,768 patient-hours in 10.9 ms versus 355 ms for a naive CPU loop (33×), with AUROC unchanged (0.80858 vs 0.80859) and 99.994% identical alerts. Honest limits: our 16-feature logistic model runs 2–4× *slower* on the accelerator (too small), the gradient-boosted trees (AuraZ-R, AUROC 0.82) are not an accelerator workload and run on the CPU, and the CPU baseline is a naive loop, not an optimised library.
 
 **17. Why does IBM Z matter for a model this small?**
 Not for raw speed: the model is microseconds anywhere. It matters for where the data is. Hospital transaction systems already hold the vitals, so scoring inside them avoids moving protected health data and avoids network delay. Our own test shows the gap: about 12 µs of compute against about 445 ms of network round trip from India to the data centre.
@@ -63,7 +63,7 @@ Not for raw speed: the model is microseconds anywhere. It matters for where the 
 That is distance to the Marist data centre plus an SSH tunnel, not the mainframe. It is the argument for co-locating inference with the data.
 
 **19. Can it scale to a hospital?**
-The ward view scores 200 beds in one batch request each hour. Batch scoring in the browser handles tens of millions of scores per second. We have not load-tested the LinuxONE service at hospital scale.
+We load-tested it on the z17: the 300-tree real-data model sustained 11,870 scores per second with two worker processes (6,492 with one) at 15 ms median latency for batches of 100, and 0.27 ms for a single patient-hour. The load generator shared the same 2-vCPU VM, so that is conservative. A 200-bed ward scored hourly needs under one score per second. We have not tested thousands of concurrent hospital connections or real feature-extraction I/O.
 
 ## Ethics, regulation, impact
 
@@ -85,4 +85,4 @@ No. In the US, HHS allows cloud processing of protected health information with 
 Everything in the repository was built during the event: the training and calibration pipeline, the PhysioNet pilot, the LinuxONE service and its verification, the app and the documentation.
 
 **25. If you had one more week?**
-Train AuraZ-R on all 40k PhysioNet stays, add per-hospital recalibration and validate on MIMIC-IV, compile the trees for the Telum II accelerator and benchmark CPU against NNPA on the z17, and extend the fairness audit to race/ethnicity.
+Train AuraZ-R on all 40k PhysioNet stays, add per-hospital recalibration and validate on MIMIC-IV, close the accuracy gap between the neural model that uses the accelerator and the trees, compare against an optimised CPU library, and extend the fairness audit to race/ethnicity.

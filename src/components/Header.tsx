@@ -48,7 +48,8 @@ export const Header: React.FC<Props> = ({ activeTab, setActiveTab, ibmz }) => {
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <div
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-cyan-500/10 text-cyan-400 border border-cyan-500/20"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-slate-900"
+              style={{ background: "linear-gradient(135deg,#0f62fe,#8a3ffc)", color: "#fff" }}
               aria-hidden="true"
             >
               <Activity className="h-5 w-5" />

@@ -1,0 +1,236 @@
+{
+ "host": {
+  "system": "IBM z17 (Telum II)",
+  "arch": "s390x",
+  "machine": "9175",
+  "nnpa": true,
+  "cpus": 2
+ },
+ "seconds_per_config": 6.0,
+ "model": "AuraZ-R 300-tree real-data model, /score_real, pure Python on CPU",
+ "workers_1": {
+  "results": [
+   {
+    "endpoint": "/score_real",
+    "clients": 1,
+    "batch": 1,
+    "requests": 19738,
+    "scores_per_s": 3290,
+    "requests_per_s": 3289.5,
+    "p50_ms": 0.27,
+    "p95_ms": 0.33,
+    "p99_ms": 0.47,
+    "errors": 0
+   },
+   {
+    "endpoint": "/score_real",
+    "clients": 2,
+    "batch": 1,
+    "requests": 19075,
+    "scores_per_s": 3179,
+    "requests_per_s": 3178.7,
+    "p50_ms": 0.44,
+    "p95_ms": 1.5,
+    "p99_ms": 2.26,
+    "errors": 0
+   },
+   {
+    "endpoint": "/score_real",
+    "clients": 4,
+    "batch": 1,
+    "requests": 20469,
+    "scores_per_s": 3411,
+    "requests_per_s": 3410.5,
+    "p50_ms": 1.0,
+    "p95_ms": 2.36,
+    "p99_ms": 3.72,
+    "errors": 0
+   },
+   {
+    "endpoint": "/score_real",
+    "clients": 8,
+    "batch": 1,
+    "requests": 20285,
+    "scores_per_s": 3380,
+    "requests_per_s": 3379.6,
+    "p50_ms": 2.0,
+    "p95_ms": 5.25,
+    "p99_ms": 7.62,
+    "errors": 0
+   },
+   {
+    "endpoint": "/score_real",
+    "clients": 1,
+    "batch": 100,
+    "requests": 365,
+    "scores_per_s": 6069,
+    "requests_per_s": 60.7,
+    "p50_ms": 14.77,
+    "p95_ms": 15.64,
+    "p99_ms": 17.81,
+    "errors": 0
+   },
+   {
+    "endpoint": "/score_real",
+    "clients": 2,
+    "batch": 100,
+    "requests": 390,
+    "scores_per_s": 6492,
+    "requests_per_s": 64.9,
+    "p50_ms": 28.55,
+    "p95_ms": 39.59,
+    "p99_ms": 45.8,
+    "errors": 0
+   },
+   {
+    "endpoint": "/score_real",
+    "clients": 4,
+    "batch": 100,
+    "requests": 382,
+    "scores_per_s": 6314,
+    "requests_per_s": 63.1,
+    "p50_ms": 58.47,
+    "p95_ms": 100.6,
+    "p99_ms": 119.97,
+    "errors": 0
+   },
+   {
+    "endpoint": "/score_real",
+    "clients": 8,
+    "batch": 100,
+    "requests": 381,
+    "scores_per_s": 6273,
+    "requests_per_s": 62.7,
+    "p50_ms": 113.95,
+    "p95_ms": 239.67,
+    "p99_ms": 321.97,
+    "errors": 0
+   }
+  ],
+  "peak": {
+   "endpoint": "/score_real",
+   "clients": 2,
+   "batch": 100,
+   "requests": 390,
+   "scores_per_s": 6492,
+   "requests_per_s": 64.9,
+   "p50_ms": 28.55,
+   "p95_ms": 39.59,
+   "p99_ms": 45.8,
+   "errors": 0
+  }
+ },
+ "workers_2": {
+  "results": [
+   {
+    "endpoint": "/score_real",
+    "clients": 1,
+    "batch": 1,
+    "requests": 20141,
+    "scores_per_s": 3357,
+    "requests_per_s": 3356.5,
+    "p50_ms": 0.27,
+    "p95_ms": 0.29,
+    "p99_ms": 0.37,
+    "errors": 0
+   },
+   {
+    "endpoint": "/score_real",
+    "clients": 2,
+    "batch": 1,
+    "requests": 31888,
+    "scores_per_s": 5314,
+    "requests_per_s": 5314.3,
+    "p50_ms": 0.31,
+    "p95_ms": 0.56,
+    "p99_ms": 0.81,
+    "errors": 0
+   },
+   {
+    "endpoint": "/score_real",
+    "clients": 4,
+    "batch": 1,
+    "requests": 30995,
+    "scores_per_s": 5165,
+    "requests_per_s": 5165.2,
+    "p50_ms": 0.61,
+    "p95_ms": 1.71,
+    "p99_ms": 2.38,
+    "errors": 0
+   },
+   {
+    "endpoint": "/score_real",
+    "clients": 8,
+    "batch": 1,
+    "requests": 27948,
+    "scores_per_s": 4657,
+    "requests_per_s": 4656.5,
+    "p50_ms": 1.52,
+    "p95_ms": 3.45,
+    "p99_ms": 4.56,
+    "errors": 0
+   },
+   {
+    "endpoint": "/score_real",
+    "clients": 1,
+    "batch": 100,
+    "requests": 362,
+    "scores_per_s": 6026,
+    "requests_per_s": 60.3,
+    "p50_ms": 14.99,
+    "p95_ms": 15.76,
+    "p99_ms": 17.17,
+    "errors": 0
+   },
+   {
+    "endpoint": "/score_real",
+    "clients": 2,
+    "batch": 100,
+    "requests": 713,
+    "scores_per_s": 11870,
+    "requests_per_s": 118.7,
+    "p50_ms": 15.22,
+    "p95_ms": 16.41,
+    "p99_ms": 17.58,
+    "errors": 0
+   },
+   {
+    "endpoint": "/score_real",
+    "clients": 4,
+    "batch": 100,
+    "requests": 614,
+    "scores_per_s": 10181,
+    "requests_per_s": 101.8,
+    "p50_ms": 35.48,
+    "p95_ms": 60.75,
+    "p99_ms": 69.79,
+    "errors": 0
+   },
+   {
+    "endpoint": "/score_real",
+    "clients": 8,
+    "batch": 100,
+    "requests": 538,
+    "scores_per_s": 8861,
+    "requests_per_s": 88.6,
+    "p50_ms": 86.1,
+    "p95_ms": 142.11,
+    "p99_ms": 178.13,
+    "errors": 0
+   }
+  ],
+  "peak": {
+   "endpoint": "/score_real",
+   "clients": 2,
+   "batch": 100,
+   "requests": 713,
+   "scores_per_s": 11870,
+   "requests_per_s": 118.7,
+   "p50_ms": 15.22,
+   "p95_ms": 16.41,
+   "p99_ms": 17.58,
+   "errors": 0
+  }
+ },
+ "note": "Load generator and server share the same 2-vCPU VM, so numbers are conservative. After the Nagle fix (TCP_NODELAY) single-row latency fell from a flat ~50 ms to ~0.3 ms."
+}

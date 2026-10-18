@@ -353,7 +353,7 @@ export const ReplayLab: React.FC<Props> = ({ model, patients, remote, remoteLabe
                 {/* Risk Trajectory Line (Cyan) */}
                 <polyline
                   fill="none"
-                  stroke="#1d5fb4"
+                  stroke="#0f62fe"
                   strokeWidth="2.5"
                   strokeLinecap="round"
                   strokeLinejoin="round"

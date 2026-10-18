@@ -48,7 +48,7 @@ const shots = [
   { file: '01_live_replay_septic.png', h: 1000, steps: `await __tab('Live Replay'); await __patient('TEST-01', 19);` },
   { file: '02_lookalike_nonseptic.png', h: 1000, steps: `await __tab('Live Replay'); await __patient('TEST-05', 12);` },
   { file: '03_validation_vs_sirs.png', h: 1500, steps: `await __tab('Validation'); window.scrollTo(0, 0);` },
-  { file: '04_ibm_z_remote_verification.png', h: 1250, steps: `await __tab('IBM Z'); await __click('Benchmark remote', 30000); await __click('Run AuraZ-R', 25000); window.scrollTo(0, 0);` },
+  { file: '04_ibm_z_remote_verification.png', h: 1950, steps: `await __tab('IBM Z'); await __click('Benchmark remote', 30000); await __click('Run AuraZ-R', 25000); window.scrollTo(0, 0);` },
   { file: '05_ward_surveillance.png', h: 1100, steps: `await __tab('Ward'); await __click('Play', 9000); const p = [...document.querySelectorAll('main button')].find((b) => /Pause/.test(b.textContent)); p && p.click(); await __w(800); window.scrollTo(0, 0);` },
   { file: '06_conformal_uncertainty.png', h: 1000, steps: `await __tab('Live Replay'); await __patient('TEST-01', 15);` },
 ];

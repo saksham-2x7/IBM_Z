@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Header, Tab } from './components/Header';
+import { Hero } from './components/Hero';
 import { BenchmarkLab } from './components/BenchmarkLab';
 import { ArchitectureExplorer } from './components/ArchitectureExplorer';
 import { SubmissionHub } from './components/SubmissionHub';
@@ -58,6 +59,8 @@ export const App: React.FC = () => {
     <div className="flex min-h-screen flex-col bg-[#f7f8fa] font-sans text-slate-100 selection:bg-cyan-500/30">
       <Header activeTab={tab} setActiveTab={setTab} ibmz={{ connected: !!info, label }} />
 
+      <Hero setTab={setTab} connected={!!info} hostLabel={label} />
+
       <main className="flex-1 pb-16">
         <section
           role="tabpanel"
@@ -100,9 +103,14 @@ export const App: React.FC = () => {
         </section>
       </main>
 
-      <footer className="border-t border-slate-800/80 bg-slate-900 px-4 py-4 text-center text-xs text-slate-400 sm:px-6">
-        <div className="mx-auto max-w-7xl">
-          AuraZ · IBM Z Datathon 2026 · Technology for Good · Research prototype on a simulated cohort, not a medical device
+      <footer className="border-t border-slate-800 bg-slate-900 px-4 py-6 text-xs text-slate-400 sm:px-6">
+        <div className="mx-auto flex max-w-7xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <p>AuraZ · IBM Z Datathon 2026 · Research prototype on retrospective data, not a medical device.</p>
+          <nav className="flex flex-wrap gap-4 font-medium text-cyan-300" aria-label="Project links">
+            <a className="hover:underline" href="https://github.com/saksham-2x7/IBM_Z" target="_blank" rel="noreferrer">Source code</a>
+            <a className="hover:underline" href="https://github.com/saksham-2x7/IBM_Z/blob/main/docs/MODEL_CARD.md" target="_blank" rel="noreferrer">Model card</a>
+            <a className="hover:underline" href="https://github.com/saksham-2x7/IBM_Z/blob/main/docs/REAL_DATA_PILOT.md" target="_blank" rel="noreferrer">Real-data results</a>
+          </nav>
         </div>
       </footer>
     </div>
