@@ -144,3 +144,40 @@ describe('IBM z17 measurements (public/nnpa_z17.json, loadtest_z17.json, metrics
     expect(lt.workers_2.peak.scores_per_s).toBeGreaterThan(lt.workers_1.peak.scores_per_s * 1.3);
   });
 });
+
+import { existsSync } from 'node:fs';
+type FullM = { auroc: number; auroc_ci95: [number, number]; cohorts: { train: number; calibration: number; test: number; test_septic: number }; conformal: Metrics['conformal'] };
+type FullA = { n_stays: number; cross_hospital: Record<string, { auroc: number; auroc_ci95: [number, number] }> };
+describe.skipIf(!existsSync(new URL('../public/full/metrics_physionet.json', import.meta.url)))('full-dataset results (public/full/)', () => {
+  const fm = () => load<FullM>('full/metrics_physionet.json');
+  const fa = () => load<FullA>('full/audit_physionet.json');
+  it('AUROC lies inside its CI and the cohort sizes add up to the audit', () => {
+    expect(fm().auroc).toBeGreaterThanOrEqual(fm().auroc_ci95[0]);
+    expect(fm().auroc).toBeLessThanOrEqual(fm().auroc_ci95[1]);
+    expect(fm().cohorts.train + fm().cohorts.calibration + fm().cohorts.test).toBe(fa().n_stays);
+  });
+  it('uses more stays than the first run and has both cross-hospital directions', () => {
+    const first = load<{ cohorts: { train: number; calibration: number; test: number } }>('metrics_physionet.json');
+    expect(fm().cohorts.train + fm().cohorts.calibration + fm().cohorts.test).toBeGreaterThan(first.cohorts.train + first.cohorts.calibration + first.cohorts.test);
+    expect(Object.keys(fa().cross_hospital)).toHaveLength(2);
+  });
+  it('conformal coverage is near target for both classes (hours within a patient are correlated)', () => {
+    expect(Math.abs(fm().conformal.coverage_septic_hours - 0.9)).toBeLessThan(0.06);
+    expect(Math.abs(fm().conformal.coverage_nonseptic_hours - 0.9)).toBeLessThan(0.06);
+  });
+});
+
+describe('z17 concurrency and recalibration results', () => {
+  it('concurrency: every level reached 2,000 connections with at least 99.9% success', () => {
+    const cc = load<{ results: { connections: number; success_pct: number; p99_ms: number }[] }>('concurrency_z17.json');
+    expect(Math.max(...cc.results.map((r) => r.connections))).toBeGreaterThanOrEqual(2000);
+    for (const r of cc.results) { expect(r.success_pct).toBeGreaterThanOrEqual(99.9); expect(r.p99_ms).toBeLessThan(100); }
+  });
+  it('recalibration with 200+ stays brings coverage within 0.06 of target in both directions', () => {
+    const rc = load<{ directions: Record<string, { after: Record<string, { coverage_septic_mean: number; coverage_nonseptic_mean: number }> }> }>('recalibration.json');
+    for (const d of Object.values(rc.directions)) for (const k of ['200', '400']) {
+      expect(Math.abs(d.after[k].coverage_septic_mean - 0.9)).toBeLessThan(0.06);
+      expect(Math.abs(d.after[k].coverage_nonseptic_mean - 0.9)).toBeLessThan(0.06);
+    }
+  });
+});

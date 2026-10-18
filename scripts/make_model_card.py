@@ -44,6 +44,12 @@ if aud:
         if k == "operating_point": continue
         add(f"| {k} | {g.get('septic_stays', '—')} | {g['auroc']:.3f} | {g['alert_rate_pct']:.1f}% | {g['sensitivity_hour_pct']:.0f}% |" if "auroc" in g else f"| {k} | — | {g.get('note', '—')} | | |")
     add(f"\n{aud['subgroups']['operating_point']}. Subgroups have few septic stays; differences are a screening signal, not proof of bias. Race/ethnicity is not in the dataset and was not audited.\n")
+if os.path.exists(os.path.join(R, "public", "full", "metrics_physionet.json")):
+    fm = json.load(open(os.path.join(R, "public", "full", "metrics_physionet.json"))); fa = json.load(open(os.path.join(R, "public", "full", "audit_physionet.json")))
+    fn = fm["cohorts"]["train"] + fm["cohorts"]["calibration"] + fm["cohorts"]["test"]
+    add(f"## AuraZ-R on the full dataset ({fn:,} stays)\n")
+    add(f"Same method as above, every PhysioNet 2019 training stay. AUROC **{fm['auroc']:.3f}** ({ci(fm['auroc_ci95'])}) on {fm['cohorts']['test']:,} held-out stays ({fm['cohorts']['test_septic']} septic); {fm['ablations']['without_icu_time']:.3f} without ICU-time features. "
+        f"Cross-hospital AUROC: " + ", ".join(f"{k.replace('train_', '').replace('_test_', ' → ')} {x['auroc']:.3f}" for k, x in fa["cross_hospital"].items()) + ". Side-by-side tables: `docs/FULL_DATA_RESULTS.md`.\n")
 mlp = j("metrics_mlp.json"); nn = j("nnpa_z17.json"); lt = j("loadtest_z17.json")
 add("## AuraZ-N on the Telum II accelerator (IBM z17, zDNN)\n")
 add(f"Neural variant (108→64→32→1, {mlp['parameters']:,} parameters), AUROC **{mlp['auroc']:.3f}** ({ci(mlp['auroc_ci95'])}) on the same held-out stays as AuraZ-R. Run on the on-chip accelerator: **{nn['timing']['nnpa_total_ms']:.1f} ms vs {nn['timing']['cpu_fp32_ms']:.0f} ms** for {nn['rows']:,} patient-hours "
