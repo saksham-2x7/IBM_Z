@@ -101,10 +101,10 @@ Early warning helps only if clinicians trust it. Frequent alarms cause desensiti
 4. Deeper integration (HL7 v2, FHIR subscriptions) and a silent-mode pilot with clinicians before any alerting.
 
 ## References
-
-- WHO, Sepsis fact sheet — who.int/news-room/fact-sheets/detail/sepsis
-- Singer M. et al., The Third International Consensus Definitions for Sepsis and Septic Shock (Sepsis-3), JAMA 2016 — jamanetwork.com/journals/jama/fullarticle/2492881
-- Kumar A. et al., Duration of hypotension before initiation of effective antimicrobial therapy, Crit Care Med 2006 — PMID 16625125
-- Surviving Sepsis Campaign, Adult Guidelines 2026 — sccm.org/survivingsepsiscampaign
-- AHRQ PSNet, Reducing safety hazards of monitor alert and alarm fatigue — psnet.ahrq.gov
-- Reyna M.A. et al., PhysioNet/Computing in Cardiology Challenge 2019 — physionet.org/content/challenge-2019
+ 
+- WHO, Sepsis fact sheet — [who.int/news-room/fact-sheets/detail/sepsis](https://www.who.int/news-room/fact-sheets/detail/sepsis)
+- Singer M. et al., The Third International Consensus Definitions for Sepsis and Septic Shock (Sepsis-3), JAMA 2016 — [jamanetwork.com/journals/jama/fullarticle/2492881](https://jamanetwork.com/journals/jama/fullarticle/2492881)
+- Kumar A. et al., Duration of hypotension before initiation of effective antimicrobial therapy, Crit Care Med 2006 — PMID [16625125](https://pubmed.ncbi.nlm.nih.gov/16625125/)
+- Surviving Sepsis Campaign, Adult Guidelines 2026 — [sccm.org/survivingsepsiscampaign](https://www.sccm.org/survivingsepsiscampaign)
+- AHRQ PSNet, Reducing safety hazards of monitor alert and alarm fatigue — [psnet.ahrq.gov](https://psnet.ahrq.gov)
+- Reyna M.A. et al., PhysioNet/Computing in Cardiology Challenge 2019 — [physionet.org/content/challenge-2019](https://physionet.org/content/challenge-2019/)
