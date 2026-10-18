@@ -1,0 +1,116 @@
+{
+ "n_stays": 39317,
+ "ks": [
+  25,
+  50,
+  100,
+  200,
+  400
+ ],
+ "reps": 20,
+ "directions": {
+  "train_A_test_B": {
+   "target_stays": 19436,
+   "source_calibration_stays": 3976,
+   "before": {
+    "coverage_septic": 0.7436900802191352,
+    "coverage_nonseptic": 0.9138114987652758,
+    "uncertain_fraction": 0.22689065073779385
+   },
+   "after": {
+    "25": {
+     "draws": 13,
+     "coverage_septic_mean": 0.7934154089260238,
+     "coverage_septic_sd": 0.15684709013578693,
+     "coverage_nonseptic_mean": 0.9000393272942468,
+     "coverage_nonseptic_sd": 0.06280227502670421,
+     "uncertain_fraction_mean": 0.36182632660795544
+    },
+    "50": {
+     "draws": 18,
+     "coverage_septic_mean": 0.7352947185425293,
+     "coverage_septic_sd": 0.2765186748234563,
+     "coverage_nonseptic_mean": 0.9056982405817594,
+     "coverage_nonseptic_sd": 0.06609542884657149,
+     "uncertain_fraction_mean": 0.4215644049145696
+    },
+    "100": {
+     "draws": 20,
+     "coverage_septic_mean": 0.8595315175347101,
+     "coverage_septic_sd": 0.16690012375570762,
+     "coverage_nonseptic_mean": 0.8707976456288147,
+     "coverage_nonseptic_sd": 0.026636029500906905,
+     "uncertain_fraction_mean": 0.5029636245138981
+    },
+    "200": {
+     "draws": 20,
+     "coverage_septic_mean": 0.8829081424670135,
+     "coverage_septic_sd": 0.08709230126802242,
+     "coverage_nonseptic_mean": 0.9047837687124721,
+     "coverage_nonseptic_sd": 0.027930201881525746,
+     "uncertain_fraction_mean": 0.5265396165781089
+    },
+    "400": {
+     "draws": 20,
+     "coverage_septic_mean": 0.8992028071535383,
+     "coverage_septic_sd": 0.040034575819309276,
+     "coverage_nonseptic_mean": 0.9031403228630689,
+     "coverage_nonseptic_sd": 0.02682085787757603,
+     "uncertain_fraction_mean": 0.5296910728543234
+    }
+   }
+  },
+  "train_B_test_A": {
+   "target_stays": 19881,
+   "source_calibration_stays": 3887,
+   "before": {
+    "coverage_septic": 0.932774061897744,
+    "coverage_nonseptic": 0.776096403129207,
+    "uncertain_fraction": 0.4545241369502828
+   },
+   "after": {
+    "25": {
+     "draws": 16,
+     "coverage_septic_mean": 0.6658938512294996,
+     "coverage_septic_sd": 0.2752255453146136,
+     "coverage_nonseptic_mean": 0.8769824799394216,
+     "coverage_nonseptic_sd": 0.06329035545522567,
+     "uncertain_fraction_mean": 0.28584664198328325
+    },
+    "50": {
+     "draws": 20,
+     "coverage_septic_mean": 0.8631572625397375,
+     "coverage_septic_sd": 0.1290809933191201,
+     "coverage_nonseptic_mean": 0.9013044575445657,
+     "coverage_nonseptic_sd": 0.04603127045093182,
+     "uncertain_fraction_mean": 0.4887156389743077
+    },
+    "100": {
+     "draws": 20,
+     "coverage_septic_mean": 0.8909791999090629,
+     "coverage_septic_sd": 0.0887802991593471,
+     "coverage_nonseptic_mean": 0.8934998815128867,
+     "coverage_nonseptic_sd": 0.04019356456979183,
+     "uncertain_fraction_mean": 0.5323809719026656
+    },
+    "200": {
+     "draws": 20,
+     "coverage_septic_mean": 0.9151961215094637,
+     "coverage_septic_sd": 0.054294118164949785,
+     "coverage_nonseptic_mean": 0.8915553457799381,
+     "coverage_nonseptic_sd": 0.02284066023605031,
+     "uncertain_fraction_mean": 0.5551305339268044
+    },
+    "400": {
+     "draws": 20,
+     "coverage_septic_mean": 0.8965795197195481,
+     "coverage_septic_sd": 0.05286204657714908,
+     "coverage_nonseptic_mean": 0.8951663215466119,
+     "coverage_nonseptic_sd": 0.015699320132572588,
+     "uncertain_fraction_mean": 0.5056073901344499
+    }
+   }
+  }
+ },
+ "runtime_s": 305.5
+}
