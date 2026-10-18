@@ -14,7 +14,7 @@ AuraZ scores ICU vitals every hour and warns clinicians hours before sepsis onse
 | Latency Lab | **Measured** on the viewer's CPU. Cloud path is a labelled, adjustable assumption |
 | IBM z17 / Telum II | **Measured.** Inference service verified on a real z17 (exact parity, 11,870 scores/s peak, 0.27 ms median). A neural variant (AuraZ-N, AUROC 0.80) runs on the **on-chip NNPA accelerator via zDNN: 33× faster than a plain CPU loop, 1.2–1.5× faster than tuned OpenBLAS, AUROC unchanged** (see `docs/NNPA.md`); the accelerator is slower for our tiny logistic model, and the tree model (AuraZ-R) stays on the CPU |
 | IBM LinuxONE inference service (`ml/serve.py`) | **Real.** Standard-library Python, runs on s390x with nothing to install; the app's Live Replay and 200-bed Ward score on it once connected, and the IBM Z tab verifies remote = local results |
-| Real-data model AuraZ-R (`ml/train_physionet_gbm.py`) | **Real ICU data, 14,635 PhysioNet 2019 stays: AUROC 0.82 pooled (95% CI 0.79–0.84), 0.79 without ICU-time features; about 0.74 when tested on the other hospital.** Uncertainty coverage does not transfer across hospitals. See `docs/REAL_DATA_PILOT.md` and `docs/MODEL_CARD.md` |
+| Real-data model AuraZ-R (`ml/train_physionet_gbm.py`) | **Real ICU data. First run (14,635 stays): AUROC 0.82; all 39,317 stays: AUROC 0.83 (95% CI 0.82–0.85), 0.82 without ICU-time features; other hospital 0.77–0.79 (0.74 in the first run).** Uncertainty coverage breaks across hospitals but is restored by recalibrating with about 200 local stays (`docs/FULL_DATA_RESULTS.md`). See `docs/REAL_DATA_PILOT.md` and `docs/MODEL_CARD.md` |
 
 ## Held-out results (simulated cohort, 3,000 test stays)
 

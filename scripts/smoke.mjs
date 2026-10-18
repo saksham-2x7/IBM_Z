@@ -1,7 +1,7 @@
 // End-to-end smoke test: drives the real app in headless Chrome, checks every tab and interaction, fails on any console error.
 //   npm run dev  (in another terminal)  then:  node scripts/smoke.mjs [appUrl]
 import { spawn } from 'node:child_process';
-import { mkdtempSync } from 'node:fs';
+import { existsSync, mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -71,6 +71,7 @@ try {
   // ---- Validation
   const val = await ev(`${H} await tab('Validation'); return txt();`);
   check('Validation: real-data panel (AuraZ-R)', /AuraZ-R on PhysioNet 2019/.test(val) && /0\.8\d\d/.test(val));
+  if (existsSync(new URL('../public/full/metrics_physionet.json', import.meta.url))) check('Validation: full-dataset card + recalibration card', /Full dataset · AuraZ-R on every PhysioNet 2019 stay/.test(val) && /Fixing the uncertainty guarantee at a new hospital/.test(val));
   check('Validation: external validation + subgroup audit', /External validation and fairness audit/.test(val) && /sex=female/.test(val));
   check('Validation: simulated panel + SIRS table', /SIRS rule/.test(val) && /0\.818/.test(val));
   // ---- IBM Z

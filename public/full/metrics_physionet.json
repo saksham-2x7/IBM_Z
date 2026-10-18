@@ -1,0 +1,240 @@
+{
+ "data": "PhysioNet/CinC Challenge 2019 (real ICU data), 5,126-file sample of hospitals A+B, patient-level 60/20/20 split.",
+ "model": "AuraZ-R: gradient boosting, 300 trees, all 34 clinical variables + measurement recency + trends + demographics",
+ "task": "Predict Sepsis-3 onset within the next 6 h, scored hourly",
+ "cohorts": {
+  "train": 23590,
+  "calibration": 7863,
+  "test": 7864,
+  "test_septic": 504
+ },
+ "n_features": 108,
+ "auroc": 0.8312380522929228,
+ "auroc_ci95": [
+  0.8153568550076893,
+  0.8464653467784392
+ ],
+ "auprc": 0.060991755821173256,
+ "prevalence": 0.011240339735251358,
+ "baselines": {
+  "logistic_16_features": 0.608,
+  "logistic_same_rich_features": 0.7824725559083957
+ },
+ "ablations": {
+  "without_icu_time": 0.8199530987774997,
+  "without_icu_time_and_recency": 0.7830451181547126
+ },
+ "conformal": {
+  "method": "class-conditional split conformal",
+  "alpha": 0.1,
+  "target_coverage": 0.9,
+  "coverage_septic_hours": 0.908781484002723,
+  "coverage_nonseptic_hours": 0.8865316009007824,
+  "empirical_coverage": 0.8867816971459178,
+  "uncertain_fraction": 0.35788889739077206,
+  "qhat_pos": 0.9958488857314839,
+  "qhat_neg": 0.020958943226668802
+ },
+ "alerting": {
+  "threshold": 0.028566037555924368,
+  "false_alert_budget_per_100_patient_days": 15.0,
+  "model": {
+   "sensitivity": 0.623015873015873,
+   "median_lead_h": 37.0,
+   "false_alerts_per_100_patient_days": 17.46406942838903,
+   "pct_nonseptic_patients_alerted": 13.152173913043477
+  },
+  "baseline_sirs_rule": {
+   "sensitivity": 0.873015873015873,
+   "median_lead_h": 35.5,
+   "false_alerts_per_100_patient_days": 113.1800065563588,
+   "pct_nonseptic_patients_alerted": 68.84510869565217
+  },
+  "model_at_sirs_false_alert_rate": {
+   "threshold": 0.004822625580171248,
+   "sensitivity": 0.9623015873015873,
+   "median_lead_h": 37.0,
+   "false_alerts_per_100_patient_days": 120.00207042909642,
+   "pct_nonseptic_patients_alerted": 68.47826086956522
+  }
+ },
+ "roc": {
+  "fpr": [
+   0.0,
+   0.0031,
+   0.0065,
+   0.0098,
+   0.0136,
+   0.0186,
+   0.0239,
+   0.0288,
+   0.035,
+   0.0395,
+   0.0437,
+   0.0489,
+   0.0548,
+   0.062,
+   0.0701,
+   0.0797,
+   0.0899,
+   0.1022,
+   0.1114,
+   0.1225,
+   0.1331,
+   0.1478,
+   0.1631,
+   0.1818,
+   0.1993,
+   0.2194,
+   0.2367,
+   0.2558,
+   0.2793,
+   0.3006,
+   0.319,
+   0.3442,
+   0.3652,
+   0.3923,
+   0.4174,
+   0.451,
+   0.4767,
+   0.5048,
+   0.5358,
+   0.5623,
+   0.5918,
+   0.6178,
+   0.6469,
+   0.6735,
+   0.6981,
+   0.7232,
+   0.7443,
+   0.765,
+   0.7874,
+   0.8103,
+   0.8346,
+   0.8563,
+   0.8777,
+   0.8966,
+   0.9148,
+   0.9337,
+   0.95,
+   0.9668,
+   0.9844,
+   1.0
+  ],
+  "tpr": [
+   0.0,
+   0.0361,
+   0.0698,
+   0.1031,
+   0.1358,
+   0.1681,
+   0.2008,
+   0.2328,
+   0.2628,
+   0.2958,
+   0.3268,
+   0.3587,
+   0.389,
+   0.4173,
+   0.4455,
+   0.4738,
+   0.4997,
+   0.5238,
+   0.549,
+   0.5769,
+   0.6007,
+   0.6263,
+   0.6532,
+   0.6794,
+   0.7029,
+   0.7263,
+   0.7474,
+   0.7679,
+   0.7886,
+   0.8067,
+   0.8257,
+   0.8438,
+   0.8618,
+   0.8764,
+   0.8904,
+   0.903,
+   0.9115,
+   0.9234,
+   0.9299,
+   0.9364,
+   0.9435,
+   0.9483,
+   0.9537,
+   0.9619,
+   0.9639,
+   0.9683,
+   0.9738,
+   0.9786,
+   0.9826,
+   0.9854,
+   0.9864,
+   0.9901,
+   0.9939,
+   0.9949,
+   0.998,
+   0.9986,
+   0.9997,
+   1.0,
+   1.0,
+   1.0
+  ]
+ },
+ "top_features_by_gain": [
+  [
+   "ICULOS",
+   0.2663
+  ],
+  [
+   "FiO2_hours_since",
+   0.0507
+  ],
+  [
+   "WBC",
+   0.0291
+  ],
+  [
+   "PTT",
+   0.0241
+  ],
+  [
+   "HospAdmTime",
+   0.0237
+  ],
+  [
+   "Temp",
+   0.0227
+  ],
+  [
+   "Creatinine",
+   0.0195
+  ],
+  [
+   "BUN",
+   0.0188
+  ],
+  [
+   "Platelets",
+   0.0176
+  ],
+  [
+   "Temp_max6",
+   0.0174
+  ],
+  [
+   "Alkalinephos",
+   0.0173
+  ],
+  [
+   "Phosphate",
+   0.0153
+  ]
+ ],
+ "export_parity_max_abs_diff": 0.0,
+ "runtime_s": 332.2,
+ "sample_note": "Reproduce: download the PhysioNet 2019 training sets into data/physionet2019/ and run ml/train_physionet_gbm.py."
+}

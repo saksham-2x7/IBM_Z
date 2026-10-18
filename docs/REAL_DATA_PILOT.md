@@ -52,3 +52,6 @@ The trees are plain JSON (`public/model_physionet.json`) scored with no dependen
 
 ## Reproduce
 Download the PhysioNet 2019 training sets into `data/physionet2019/`; run `python3 ml/train_physionet_gbm.py` (about 2 min) and `python3 ml/audit_physionet.py` (about 1.5 min).
+
+## Update: all 39,317 stays
+The full PhysioNet 2019 training sets (40,336 files, 39,317 usable stays) were downloaded and the identical pipeline rerun: AUROC 0.831 (95% CI 0.815–0.846), 0.820 without ICU-time features, other hospital 0.787 / 0.771, SIRS-matched catch rate 96% vs 87%. The tables above describe the first run (37% sample). Everything side by side: `docs/FULL_DATA_RESULTS.md`; per-hospital recalibration (about 200 local stays restore the uncertainty guarantee): `public/full/recalibration.json`.
