@@ -22,7 +22,7 @@ The header pill and the hero chip must say **IBM z17 (Telum II)** before you sta
 
 **318 spoken words in total (about 290 without the ✂ sentences).** If a rehearsal runs past 2:55, drop the ✂ lines first.
 
-**If a judge asks later (do not put in the video):** the 355 ms is a plain single-thread CPU loop; against OpenBLAS it is 15.9 ms (1 thread) or 12.7 ms (2 threads) versus 10.9 ms on the chip, so 1.5× and 1.2×. The accelerator runs AuraZ-N (AUROC 0.80); the tree model AuraZ-R (0.82) runs on the CPU. The alert label and the alert line are different things: the line means "act now" (budgeted to limit alarms), the label means "can sepsis be excluded at 90% confidence".
+**If a judge asks later (do not put in the video):** the video quotes our first run (14,635 stays, 0.82); on all 39,317 stays it is 0.83, and 0.77–0.79 at the other hospital, with recalibration restoring the uncertainty guarantee (`docs/FULL_DATA_RESULTS.md`). the 355 ms is a plain single-thread CPU loop; against OpenBLAS it is 15.9 ms (1 thread) or 12.7 ms (2 threads) versus 10.9 ms on the chip, so 1.5× and 1.2×. The accelerator runs AuraZ-N (AUROC 0.80); the tree model AuraZ-R (0.82) runs on the CPU. The alert label and the alert line are different things: the line means "act now" (budgeted to limit alarms), the label means "can sepsis be excluded at 90% confidence".
 
 ## 2. Tech stack and tools
 

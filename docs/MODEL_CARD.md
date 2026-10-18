@@ -47,6 +47,10 @@ Pooled random split for comparison: AUROC 0.819 (0.79–0.84). **Cross-hospital 
 
 alert if risk >= 0.0391 (top 5% of all held-out patient-hours). Subgroups have few septic stays; differences are a screening signal, not proof of bias. Race/ethnicity is not in the dataset and was not audited.
 
+## AuraZ-R on the full dataset (39,317 stays)
+
+Same method as above, every PhysioNet 2019 training stay. AUROC **0.831** (0.82–0.85) on 7,864 held-out stays (504 septic); 0.820 without ICU-time features. Cross-hospital AUROC: A → B 0.787, B → A 0.771. Side-by-side tables: `docs/FULL_DATA_RESULTS.md`.
+
 ## AuraZ-N on the Telum II accelerator (IBM z17, zDNN)
 
 Neural variant (108→64→32→1, 9,089 parameters), AUROC **0.800** (0.77–0.83) on the same held-out stays as AuraZ-R. Run on the on-chip accelerator: **10.9 ms vs 355 ms** for 32,768 patient-hours (**32.6×** vs a plain single-thread CPU loop; **1.5×** vs OpenBLAS on one thread, 1.2× vs both threads). AUROC on the accelerator 0.80858 vs 0.80859 in FP32; 99.994% identical alert decisions; largest probability difference 0.00065 (16-bit arithmetic). A 16-feature logistic regression is 2-4x *slower* on the accelerator (too small), and tree models are not an accelerator workload. See `docs/NNPA.md`.

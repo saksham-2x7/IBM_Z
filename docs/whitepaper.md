@@ -55,12 +55,16 @@ Early warning helps only if clinicians trust it. Frequent alarms cause desensiti
 | AuraZ-R at a matched alarm rate | **95%** | 115.6 |
 | SIRS ≥ 2 | 89% | 113.8 |
 
+**All stays (39,317; 7,864 held out, 504 septic).** The same pipeline and settings on every PhysioNet 2019 training stay: AUROC **0.831** (95% CI 0.815–0.846); 0.820 without ICU-time features; 0.783 also without recency. At SIRS's alarm rate AuraZ-R catches **96%** of septic patients early versus 87% for SIRS. Conformal coverage inside the pool: 91% septic, 89% non-septic. Side-by-side tables with the first run: `docs/FULL_DATA_RESULTS.md`.
+
 **External validation (train on one hospital, test on the other).**
 
 | Train → test | Test septic stays | AUROC (95% CI) | Coverage septic · non-septic |
 |---|---|---|---|
 | Hospital A → B | 329 | 0.737 (0.711–0.769) | 69.8% · 92.7% |
 | Hospital B → A | 590 | 0.745 (0.726–0.762) | 92.6% · 79.6% |
+
+**Across hospitals, all stays:** A → B **0.787** (0.772–0.800), B → A **0.771** (0.761–0.782). Coverage still breaks (A → B septic 74%, B → A non-septic 78%). **Recalibrating only the uncertainty thresholds with about 200–400 stays from the new hospital restores it** (septic 0.88–0.92, non-septic 0.89–0.90; the model says "uncertain" more often, about 53–56% of hours).
 
 **Subgroups** (same alert threshold for all): AUROC is similar by sex and age band (0.81–0.84), but the share of septic hours alerted differs (women 46% vs men 32%; ages 50–64 23% vs 65–74 54%), on groups of 35–119 septic stays. Full table in `docs/MODEL_CARD.md`.
 
@@ -84,7 +88,7 @@ Early warning helps only if clinicians trust it. Frequent alarms cause desensiti
 ## 5. Limitations
 
 1. The simulated cohort demonstrates the method only. On real data AuraZ-R reaches AUROC 0.82 pooled but about 0.74 across hospitals.
-2. We used 37% of the PhysioNet 2019 stays (downloads were throttled); only two US hospitals, no race/ethnicity audit, and subgroup differences rest on small groups.
+2. Only two US hospitals (the first run used 37% of the stays, the later run all of them), no race/ethnicity audit, and subgroup differences rest on small groups. The z17 verification used the first-run model; the all-stays model was not redeployed.
 3. Measurement-recency features partly encode clinician behaviour; the model learns from care patterns as well as physiology.
 4. There is no prospective or silent-mode validation, and no race/ethnicity audit (the data has none). This is not a medical device.
 5. The accelerator result is for AuraZ-N, which is slightly less accurate than AuraZ-R; the 33× is against a plain loop (1.2–1.5× against tuned OpenBLAS); load numbers share a 2-vCPU VM with the load generator.
