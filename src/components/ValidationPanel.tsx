@@ -21,8 +21,13 @@ export const ValidationPanel: React.FC<{ m: Metrics }> = ({ m }) => {
     <div className="space-y-5 p-4 md:p-6 max-w-7xl mx-auto">
       <div className="rounded-2xl border border-amber-700/40 bg-amber-950/20 p-4 text-sm text-amber-200">
         <b>Transparency:</b> {m.data} The cards below are a <b>method demonstration</b> on a patient-level held-out test cohort of {m.cohorts.test.toLocaleString()} simulated stays ({m.cohorts.test_septic} septic). Real-data results from the same pipeline are in the PhysioNet panel just below.</div>
+      <nav className="flex flex-wrap gap-2 text-sm" aria-label="Jump to section">
+        {[['#real', 'Real ICU data'], ['#audit', 'Other hospital + fairness'], ['#sim', 'Simulated demo']].map(([h, t]) => (
+          <a key={h} href={h} className="rounded-full border border-slate-700 bg-slate-900 px-3 py-1 font-medium text-cyan-300 transition-colors hover:border-cyan-400 hover:bg-cyan-950">{t}</a>
+        ))}
+      </nav>
       {real && (
-        <div className="rounded-2xl border border-emerald-800/50 bg-slate-900/60 p-5">
+        <div id="real" className="rounded-2xl border border-emerald-800/50 bg-slate-900/60 p-5">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
             <h3 className="font-semibold text-white">Real ICU data · AuraZ-R on PhysioNet 2019</h3>
             <span className="text-xs text-slate-400">{real.cohorts.test.toLocaleString()} held-out stays · {real.cohorts.test_septic} septic · {real.n_features} features · gradient-boosted trees</span>
@@ -51,7 +56,7 @@ export const ValidationPanel: React.FC<{ m: Metrics }> = ({ m }) => {
         </div>
       )}
       {audit && (
-        <div className="rounded-2xl border border-slate-700 bg-slate-900/60 p-5">
+        <div id="audit" className="rounded-2xl border border-slate-700 bg-slate-900/60 p-5">
           <h3 className="font-semibold text-white">External validation and fairness audit · PhysioNet 2019</h3>
           <p className="mt-1 text-sm text-slate-400">Hospitals A and B are different sites, so training on one and testing on the other is a real external test. {audit.n_stays.toLocaleString()} stays, {audit.septic} septic.</p>
           <table className="mt-3 w-full text-sm font-mono">
@@ -79,7 +84,7 @@ export const ValidationPanel: React.FC<{ m: Metrics }> = ({ m }) => {
           <p className="mt-2 text-xs text-slate-400">Small subgroups have wide confidence intervals; differences here are a screening signal, not proof of bias.</p>
         </div>
       )}
-      <div className="grid gap-5 md:grid-cols-4">
+      <div id="sim" className="grid gap-5 md:grid-cols-4">
         {[['AUROC', m.auroc.toFixed(3), `95% CI ${m.auroc_ci95[0].toFixed(3)}–${m.auroc_ci95[1].toFixed(3)}`],
           ['AUPRC', m.auprc.toFixed(3), `prevalence ${pct(m.prevalence, 1)}`],
           ['Conformal coverage', `${pct(m.conformal.coverage_septic_hours, 1)} · ${pct(m.conformal.coverage_nonseptic_hours, 1)}`, `septic · non-septic hours, each targeting ${pct(m.conformal.target_coverage)} (class-conditional)`],
@@ -93,7 +98,7 @@ export const ValidationPanel: React.FC<{ m: Metrics }> = ({ m }) => {
           <svg viewBox={`0 0 ${W} ${H}`} className="mt-2 w-full">
             <rect x="30" y="16" width={W - 40} height={H - 40} fill="none" stroke="#e5e8ee" />
             <line x1="30" y1={H - 24} x2={W - 10} y2="16" stroke="#cbd2dc" strokeDasharray="4 4" />
-            <polyline points={roc} fill="none" stroke="#1d5fb4" strokeWidth="2" />
+            <polyline points={roc} fill="none" stroke="#0f62fe" strokeWidth="2" />
             <text x={W / 2} y={H - 6} fontSize="9" fill="#64748b" textAnchor="middle">false-positive rate</text>
           </svg>
         </div>

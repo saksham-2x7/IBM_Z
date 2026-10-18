@@ -48,7 +48,7 @@ AUROC is similar across groups (0.81–0.84). The share of septic hours alerted 
 - **Limits.** Two US hospitals, retrospective, 37% of the dataset, no prospective test, no race audit.
 
 ## Runs on IBM Z
-The trees are plain JSON (`public/model_physionet.json`) scored with no dependencies by `ml/serve.py` (`POST /score_real`) and `src/lib/gbm.ts`. The final AuraZ-R model was verified on the IBM z17 (machine 9175, LinuxONE Community Cloud): 300 real held-out rows matched sklearn exactly (max difference 0.0) at about 150–200 µs per row in pure Python on the CPU, and the FHIR endpoint returned the same 56% risk as the app. The Telum II NNPA accelerator is not used.
+The trees are plain JSON (`public/model_physionet.json`) scored with no dependencies by `ml/serve.py` (`POST /score_real`) and `src/lib/gbm.ts`. The final AuraZ-R model was verified on the IBM z17 (machine 9175, LinuxONE Community Cloud): 300 real held-out rows matched sklearn exactly (max difference 0.0) at about 150–200 µs per row in pure Python on the CPU, and the FHIR endpoint returned the same 56% risk as the app. A neural variant (AuraZ-N, AUROC 0.800) runs on the Telum II NNPA accelerator: see `docs/NNPA.md`.
 
 ## Reproduce
 Download the PhysioNet 2019 training sets into `data/physionet2019/`; run `python3 ml/train_physionet_gbm.py` (about 2 min) and `python3 ml/audit_physionet.py` (about 1.5 min).

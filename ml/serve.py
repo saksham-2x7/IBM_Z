@@ -1,5 +1,5 @@
 """AuraZ inference service. Pure Python standard library: runs on IBM LinuxONE (s390x) with nothing to install.
-    python3 ml/serve.py [port]      # default 8080
+    python3 ml/serve.py [port] [workers]   # default 8080, 1 worker
 GET  /health  -> platform facts (arch, IBM machine type, NNPA flag) read from the host
 POST /score   -> {"batch": [[16 features], ...]} -> {"risk": [...], "compute_us": float, "server": {...}}
 POST /fhir/score -> FHIR Bundle of Observations (one patient) -> FHIR RiskAssessment + per-hour risks, alert, drivers; alerts are appended to alerts.log
@@ -105,6 +105,7 @@ def audit(entry):
 
 class H(BaseHTTPRequestHandler):
     protocol_version = "HTTP/1.1"  # keep-alive: one TCP connection for many requests
+    disable_nagle_algorithm = True  # headers and body are separate writes: without TCP_NODELAY Nagle + delayed ACK adds ~40-50 ms per request
     def _send(self, code, obj):
         body = json.dumps(obj).encode()
         self.send_response(code)
@@ -142,5 +143,10 @@ class H(BaseHTTPRequestHandler):
 
 if __name__ == "__main__":
     port = int(sys.argv[1]) if len(sys.argv) > 1 else 8080
-    print(f"AuraZ inference on {HOST['system']} [{HOST['arch']}] machine={HOST['machine']} nnpa={HOST['nnpa']} -> :{port}", flush=True)
-    ThreadingHTTPServer(("0.0.0.0", port), H).serve_forever()
+    workers = int(sys.argv[2]) if len(sys.argv) > 2 else 1  # prefork: N processes share one listening socket (uses all cores)
+    srv = ThreadingHTTPServer(("0.0.0.0", port), H)
+    print(f"AuraZ inference on {HOST['system']} [{HOST['arch']}] machine={HOST['machine']} nnpa={HOST['nnpa']} workers={workers} -> :{port}", flush=True)
+    for _ in range(workers - 1):
+        if os.fork() == 0:
+            break
+    srv.serve_forever()

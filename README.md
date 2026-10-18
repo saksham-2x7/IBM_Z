@@ -12,7 +12,7 @@ AuraZ scores ICU vitals every hour and warns clinicians hours before sepsis onse
 | Model + live scoring in the browser (`public/model.json`) | **Real.** The dashboard scores held-out patients with the exported model |
 | Data | **Simulated** ICU cohort (confounders, sparse labs, atypical presentations). Pipeline retrains unchanged on PhysioNet 2019 / MIMIC-IV once downloaded — numbers will differ |
 | Latency Lab | **Measured** on the viewer's CPU. Cloud path is a labelled, adjustable assumption |
-| IBM Z Telum II hardware numbers | **Not yet measured.** Next milestone: LinuxONE Community Cloud + ONNX / zDLC |
+| IBM z17 / Telum II | **Measured.** Inference service verified on a real z17 (exact parity, 11,870 scores/s peak, 0.27 ms median). A neural variant (AuraZ-N, AUROC 0.80) runs on the **on-chip NNPA accelerator via zDNN: 33× faster than a CPU loop, AUROC unchanged** (see `docs/NNPA.md`); the accelerator is slower for our tiny logistic model, and the tree model (AuraZ-R) stays on the CPU |
 | IBM LinuxONE inference service (`ml/serve.py`) | **Real.** Standard-library Python, runs on s390x with nothing to install; the app's Live Replay and 200-bed Ward score on it once connected, and the IBM Z tab verifies remote = local results |
 | Real-data model AuraZ-R (`ml/train_physionet_gbm.py`) | **Real ICU data, 14,635 PhysioNet 2019 stays: AUROC 0.82 pooled (95% CI 0.79–0.84), 0.79 without ICU-time features; about 0.74 when tested on the other hospital.** Uncertainty coverage does not transfer across hospitals. See `docs/REAL_DATA_PILOT.md` and `docs/MODEL_CARD.md` |
 
@@ -58,5 +58,5 @@ Run through the app against a real IBM z17 (Telum II, machine type 9175, `nnpa` 
 
 ## Roadmap
 1. AuraZ-R on all 40k PhysioNet stays plus external validation (MIMIC-IV / eICU).
-2. Export ONNX, compile with the IBM Z Deep Learning Compiler, benchmark on LinuxONE Community Cloud.
+2. Close the AuraZ-N vs AuraZ-R accuracy gap, compare the accelerator with an optimised CPU library, try the IBM Z Deep Learning Compiler.
 3. Subgroup fairness audit (age, sex, race) and calibration plots.

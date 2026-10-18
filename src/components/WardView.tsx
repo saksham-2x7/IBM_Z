@@ -213,7 +213,7 @@ export const WardView: React.FC<Props> = ({ model, remote, remoteLabel, onSelect
         ].map((item) => (
           <div
             key={item.label}
-            className="flex flex-col justify-between rounded-xl border border-slate-800 bg-slate-900/60 p-4 min-h-[96px]"
+            className="flex flex-col justify-between rounded-xl border border-slate-800 bg-slate-950 p-4 min-h-[96px]"
           >
             <div className="text-xs text-slate-400 leading-tight">{item.label}</div>
             <div className={`mt-2 font-mono text-2xl font-bold tabular-nums ${item.color}`}>

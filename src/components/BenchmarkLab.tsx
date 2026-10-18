@@ -3,6 +3,7 @@ import { Cpu, Cloud, RefreshCw, Info } from 'lucide-react';
 import { buildFeatures, Model, ReplayPatient, score } from '../lib/model';
 import { Health, remoteScore } from '../lib/remote';
 import { GbmModel, scoreGbm } from '../lib/gbm';
+import { Z17Measurements } from './Z17Measurements';
 
 interface Result { meanUs: number; p99Us: number; perSec: number; n: number }
 
@@ -127,6 +128,8 @@ cd ~/auraz && nohup python3 ml/serve.py 8080 > serve.log 2>&1 &`}</pre>
           <p className="mt-2">Open TCP 8080 in the LinuxONE security group, then paste <code>http://&lt;VM-IP&gt;:8080</code> above. The Live Replay tab will then score every hour on the mainframe.</p>
         </details>
       </div>
+      <Z17Measurements />
+
       <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6">
         <span className="rounded bg-cyan-950 px-2 py-0.5 font-mono text-xs font-semibold text-cyan-400 border border-cyan-800/50">Measured, not claimed</span>
         <h2 className="mt-2 text-2xl font-bold font-mono text-white">Latency lab: in-process inference vs a cloud round trip</h2>
@@ -157,7 +160,7 @@ cd ~/auraz && nohup python3 ml/serve.py 8080 > serve.log 2>&1 &`}</pre>
       <div className="flex gap-3 rounded-2xl border border-slate-800 bg-slate-900/60 p-5 text-sm text-slate-300">
         <Info className="mt-0.5 h-5 w-5 shrink-0 text-cyan-400" />
         <div>
-          <b>Why this matters for IBM Z:</b> at hospital scale, scoring happens inside the transaction path where the monitor data already lives, so there is no network hop to tune, throttle or leak. Measured above on a real IBM z17 through the LinuxONE Community Cloud, on the CPU. Next: compile the models for the Telum II on-chip accelerator via ONNX and the IBM Z Deep Learning Compiler, and publish the CPU vs NNPA numbers here.
+          <b>Why this matters for IBM Z:</b> at hospital scale, scoring happens inside the transaction path where the monitor data already lives, so there is no network hop to tune, throttle or leak. Measured on a real IBM z17 through the LinuxONE Community Cloud. The inference service runs on the CPU; the accelerator results above come from a neural variant (AuraZ-N) run through IBM's zDNN library.
         </div>
       </div>
     </div>
