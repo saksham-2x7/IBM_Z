@@ -1,18 +1,58 @@
 // End-to-end smoke test: drives the real app in headless Chrome, checks every tab and interaction, fails on any console error.
 //   npm run dev  (in another terminal)  then:  node scripts/smoke.mjs [appUrl]
-import { spawn } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { existsSync, mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+function findChrome() {
+  if (process.env.CHROME_PATH) return process.env.CHROME_PATH;
+  const candidates = [
+    '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+    'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+    'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
+    'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe',
+    'C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe',
+    '/usr/bin/google-chrome',
+    '/usr/bin/chromium',
+    '/usr/bin/chromium-browser',
+  ];
+  for (const c of candidates) {
+    if (existsSync(c)) return c;
+  }
+  for (const cmd of ['google-chrome', 'chromium', 'chromium-browser']) {
+    try {
+      const res = spawnSync(process.platform === 'win32' ? 'where' : 'which', [cmd], { stdio: 'pipe', encoding: 'utf-8' });
+      if (res.status === 0 && res.stdout.trim()) {
+        return res.stdout.trim().split(/\r?\n/)[0];
+      }
+    } catch {}
+  }
+  console.error('Error: No compatible browser (Chrome/Chromium/Edge) found. Set CHROME_PATH to your browser executable.');
+  process.exit(1);
+}
+
+function findPython() {
+  if (process.env.PYTHON) return process.env.PYTHON;
+  for (const py of ['python3', 'python']) {
+    try {
+      const res = spawnSync(py, ['--version'], { stdio: 'ignore' });
+      if (res.status === 0) return py;
+    } catch {}
+  }
+  return 'python';
+}
 
 const APP = process.argv[2] ?? 'http://localhost:5174/';
-const CHROME = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+const CHROME = findChrome();
+const PYTHON = findPython();
 const PORT = 9555, SERVER_PORT = 8091;
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const results = [], errors = [];
 const check = (name, ok, detail = '') => { results.push({ name, ok, detail }); console.log(`${ok ? 'PASS' : 'FAIL'}  ${name}${detail ? `  (${detail})` : ''}`); };
 
-const server = spawn('python3', ['ml/serve.py', String(SERVER_PORT)], { stdio: 'ignore', cwd: new URL('..', import.meta.url).pathname });
+const server = spawn(PYTHON, ['ml/serve.py', String(SERVER_PORT)], { stdio: 'ignore', cwd: fileURLToPath(new URL('..', import.meta.url)) });
 const chrome = spawn(CHROME, ['--headless=new', '--disable-gpu', '--hide-scrollbars', `--remote-debugging-port=${PORT}`,
   `--user-data-dir=${mkdtempSync(join(tmpdir(), 'smoke-'))}`, 'about:blank'], { stdio: 'ignore' });
 

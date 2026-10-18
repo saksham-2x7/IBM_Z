@@ -53,8 +53,7 @@ Tabs: **Live Replay** · **Ward** (200 beds) · **Validation** · **IBM Z** · A
 
 Both models run on the mainframe: the real-data AuraZ-R trees (`POST /score_real`) scored 300 real held-out rows of the final model on the z17 with results identical to sklearn and the browser (maximum difference 0.0), about 150–200 µs per row in pure Python.
 
-
-Run through the app against a real IBM z17 (Telum II, machine type 9175, `nnpa` flag present) on the LinuxONE Community Cloud: remote scores match the local reference model exactly (max difference 0.0), server-side compute is ~12 µs per request in pure Python, and the 200-bed ward scores in one batch. The ~445 ms median round trip in that test is the network distance to the data centre, which is the argument for scoring beside the data.
+Verified through the app against a real IBM z17 (Telum II, machine type 9175, `nnpa` flag present) on the LinuxONE Community Cloud: remote scores match the local reference model exactly (max difference 0.0), server-side compute is ~12 µs per request in pure Python, and the 200-bed ward scores in one batch. The ~445 ms median round trip in that test is the network distance to the data centre, which is the argument for scoring beside the data.
 
 ## Roadmap
 1. AuraZ-R on all 40k PhysioNet stays plus external validation (MIMIC-IV / eICU).
