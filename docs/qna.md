@@ -5,7 +5,7 @@ Rule for the stage: answer the question asked, give the number, name the weaknes
 ## Clinical validity
 
 **1. Does this work on real patients?**
-Moderately, and we measured how far it generalises. On all 39,317 PhysioNet stays AUROC is 0.83 (95% CI 0.82–0.85), and at SIRS's alarm rate it catches 96% vs 87% of septic patients early. In our first, smaller run it was 0.82, and at the other hospital 0.74 (0.77–0.79 with all the data). On 2,927 held-out real PhysioNet 2019 stays our real-data model AuraZ-R reaches AUROC 0.82 (95% CI 0.79–0.84). Tested on the *other* hospital it drops to about 0.74. At SIRS's alarm rate it catches 95% of septic patients early versus 89%. It is retrospective research evidence, not clinical validation.
+Moderately, and we measured how far it generalises. On all 39,317 PhysioNet stays AUROC is 0.83 (95% CI 0.82–0.85), and at SIRS's alarm rate it catches 96% vs 87% of septic patients early. In our first, smaller run it was 0.82, and at the other hospital 0.74 (0.77–0.79 with all the data). On 2,927 held-out real PhysioNet 2019 stays our real-data model AuraZ-R reaches AUROC 0.82 (95% CI 0.79–0.84). Tested on the *other* hospital, it drops to about 0.74. At SIRS's alarm rate it catches 95% of septic patients early versus 89%. It is retrospective research evidence, not clinical validation.
 
 **2. Your first real-data result was AUROC 0.61. What changed?**
 The simple 16-feature model built on simulation did not transfer, and we published that. We then used all 34 clinical variables, how recently each was measured, trends and demographics, with gradient-boosted trees: 0.608, then 0.765 (same logistic model, richer features), then 0.819 (trees). Same patients, same split.

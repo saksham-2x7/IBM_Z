@@ -1,5 +1,30 @@
 """Build docs/AuraZ_PitchDeck.pdf (8 slides, 16:9) from the metrics files with headless Chrome.   python3 scripts/build_deck.py"""
-import json, os, subprocess, tempfile
+import json, os, subprocess, sys, tempfile
+
+def find_chrome():
+    if os.environ.get("CHROME_PATH"):
+        return os.environ["CHROME_PATH"]
+    candidates = [
+        "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+        r"C:\Program Files\Google\Chrome\Application\chrome.exe",
+        r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
+        r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
+        r"C:\Program Files\Microsoft\Edge\Application\msedge.exe",
+        "/usr/bin/google-chrome",
+        "/usr/bin/chromium",
+        "/usr/bin/chromium-browser",
+    ]
+    for c in candidates:
+        if os.path.isfile(c):
+            return c
+    import shutil
+    for cmd in ["google-chrome", "chromium", "chromium-browser"]:
+        p = shutil.which(cmd)
+        if p:
+            return p
+    print("Error: No compatible browser (Chrome/Chromium/Edge) found. Set CHROME_PATH.", file=sys.stderr)
+    sys.exit(1)
+
 R = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
 j = lambda f: json.load(open(os.path.join(R, "public", f)))
 full, fa = j("full/metrics_physionet.json"), j("full/audit_physionet.json")
@@ -32,6 +57,6 @@ body = "".join(s.replace('</div>', f'<div class="n">{i+1} / {len(slides)}</div><
 html = f"<!doctype html><html><head><meta charset='utf-8'><style>{CSS}</style></head><body>{body}</body></html>"
 tmp = tempfile.NamedTemporaryFile("w", suffix=".html", delete=False); tmp.write(html); tmp.close()
 out = os.path.join(R, "docs", "AuraZ_PitchDeck.pdf")
-subprocess.run(["/Applications/Google Chrome.app/Contents/MacOS/Google Chrome", "--headless=new", "--disable-gpu", "--no-pdf-header-footer", f"--print-to-pdf={out}", f"file://{tmp.name}"], check=True, capture_output=True, timeout=120)
+subprocess.run([find_chrome(), "--headless=new", "--disable-gpu", "--no-pdf-header-footer", f"--print-to-pdf={out}", f"file://{tmp.name}"], check=True, capture_output=True, timeout=120)
 open(os.path.join(R, "build", "deck.html"), "w").write(html) if os.path.isdir(os.path.join(R, "build")) else None
 print(f"wrote {out} ({os.path.getsize(out)//1024} KB)")
