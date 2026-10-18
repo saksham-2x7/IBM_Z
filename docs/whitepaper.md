@@ -21,7 +21,7 @@ Early warning helps only if clinicians trust it. Frequent alarms cause desensiti
 
 **Alerting.** The alert threshold is chosen on the calibration cohort as the most sensitive setting that stays within **15 false alerts per 100 patient-days**. It is then frozen and evaluated on the test cohort against the classic SIRS ≥ 2 rule. Each patient has one alert per 12-hour refractory window.
 
-**Data.** (a) A clinically parameterised **simulated** ICU cohort (5,000 train / 1,500 calibration / 3,000 test stays) with realistic confounders (post-operative tachycardia, hypovolaemia, fever without sepsis), atypical presentations and labs drawn every 4 hours. (b) **Real ICU data**: PhysioNet/CinC 2019, 4,989 usable stays from a 5,126-file sample of hospitals A and B, split 60/20/20 by patient.
+**Data.** (a) A clinically parameterised **simulated** ICU cohort (5,000 train / 1,500 calibration / 3,000 test stays) with realistic confounders (post-operative tachycardia, hypovolaemia, fever without sepsis), atypical presentations and labs drawn every 4 hours. (b) **Real ICU data**: PhysioNet/CinC 2019, 14,635 usable stays (919 septic) from a 15,009-file sample (about 37%) of hospitals A and B, split 60/20/20 by patient.
 
 **Real-data model (AuraZ-R).** The 16-feature logistic model did not transfer to real data, so for real ICU data we use gradient-boosted trees (300 trees) over 108 features: all 34 clinical variables, hours since each was last measured, 3 h and 6 h trends, 6 h min/max/mean of key vitals, shock index, lab count and demographics. Missing values are handled natively by the trees. The trees are exported to plain JSON and scored with no dependencies, identically in Python and the browser.
 
@@ -39,23 +39,32 @@ Early warning helps only if clinicians trust it. Frequent alarms cause desensiti
 | Median warning before onset | 3 h | 3 h |
 | Conformal coverage (septic · non-septic hours) | 92.4% · 89.6% | — |
 
-**Real ICU data (PhysioNet 2019 sample).** Held-out: 998 stays, 72 septic, same split for every model.
+**Real ICU data (PhysioNet 2019 sample).** Held-out: 2,927 stays, 175 septic, same split for every model.
 
 | Metric | Result |
 |---|---|
-| AUROC, AuraZ-R (gradient-boosted trees, 108 features) | **0.775** (95% CI 0.721–0.822) |
-| Ablation: without ICU-time features · also without measurement recency | 0.732 · 0.720 |
-| Same 108 features, logistic regression | 0.712 |
-| Original 16-feature logistic model | 0.608 (95% CI 0.56–0.65) |
-| Conformal coverage (septic · non-septic hours, target 90%) | 89.3% · 89.8% |
+| AUROC, AuraZ-R (gradient-boosted trees, 108 features) | **0.819** (95% CI 0.791–0.845) |
+| Ablation: without ICU-time features · also without measurement recency | 0.794 · 0.766 |
+| Same 108 features, logistic regression | 0.765 |
+| Original 16-feature logistic model | 0.608 |
+| Conformal coverage (septic · non-septic hours, target 90%) | 86.3% · 91.3% |
 
 | Alerting, same patients | Septic alerted before onset | False alerts / 100 patient-days |
 |---|---|---|
-| AuraZ-R, low-burden setting | 51% | 16.7 |
-| AuraZ-R at a matched alarm rate | **94%** | 117.6 |
-| SIRS ≥ 2 | 88% | 111.9 |
+| AuraZ-R, low-burden setting | 57% | 15.0 |
+| AuraZ-R at a matched alarm rate | **95%** | 115.6 |
+| SIRS ≥ 2 | 89% | 113.8 |
 
-**Interpretation.** The simple simulated-cohort model did **not** transfer (AUROC 0.61 on real data). Rebuilding the model for real data (AuraZ-R) lifts discrimination to 0.775, and it stays at 0.73 without the ICU-time features that could act as a shortcut. At a matched alarm rate it catches more septic patients than SIRS (94% vs 88%), or it can run at a seven-times-lower alarm burden. Calibration transfers: the class-conditional coverage holds on real data. This is a moderate result from a two-hospital sample with 72 septic test stays, so the confidence interval is wide. It is research evidence, not clinical validation.
+**External validation (train on one hospital, test on the other).**
+
+| Train → test | Test septic stays | AUROC (95% CI) | Coverage septic · non-septic |
+|---|---|---|---|
+| Hospital A → B | 329 | 0.737 (0.711–0.769) | 69.8% · 92.7% |
+| Hospital B → A | 590 | 0.745 (0.726–0.762) | 92.6% · 79.6% |
+
+**Subgroups** (same alert threshold for all): AUROC is similar by sex and age band (0.81–0.84), but the share of septic hours alerted differs (women 46% vs men 32%; ages 50–64 23% vs 65–74 54%), on groups of 35–119 septic stays. Full table in `docs/MODEL_CARD.md`.
+
+**Interpretation.** The simple simulated-cohort model did **not** transfer (AUROC 0.61 on real data). Rebuilding it for real data (AuraZ-R) gives AUROC 0.82 in a pooled split and 0.79 without the ICU-time features that could act as a shortcut. **Across hospitals it falls to about 0.74, and the uncertainty guarantee does not transfer** (septic coverage 70% in A→B, non-septic 80% in B→A), so a new hospital must recalibrate. At a matched alarm rate AuraZ-R catches more septic patients than SIRS (95% vs 89%), or it can run at about one-eighth of SIRS's alarm burden while catching 57%. Septic-hour coverage inside the pooled split is 86.3%, below the 90% target, because hours within one patient are correlated. This is research evidence, not clinical validation.
 
 ## 4. IBM Z / LinuxONE
 
@@ -65,22 +74,22 @@ Early warning helps only if clinicians trust it. Frequent alarms cause desensiti
 - Remote scores equal the browser's reference scores exactly (maximum absolute difference 0.0 over 40 requests).
 - Server-side compute about **12 µs** per request (median), in pure Python on the CPU.
 - The 200-bed ward view scores every bed each hour in one batch request on the mainframe.
-- The **real-data AuraZ-R trees** (`POST /score_real`) ran on the z17 too: 300 real held-out rows matched the browser and sklearn exactly (maximum difference 0.0), at about 225 µs per row in pure Python.
+- The **real-data AuraZ-R trees** (`POST /score_real`) ran on the z17 too: 300 real held-out rows from the final model matched sklearn exactly (maximum difference 0.0), at about 150–200 µs per row in pure Python. The FHIR endpoint (`POST /fhir/score`) also ran on the z17.
 - The end-to-end round trip from India was about 445 ms median, all network distance. That gap is the case for scoring where the data already lives.
 
 **Not yet done:** inference does not use the Telum II on-chip accelerator (NNPA). The path is ONNX export, then the IBM Z Deep Learning Compiler (`--maccel=NNPA`), then benchmarking against the CPU. Tree ensembles can also be compiled for the accelerator; we have not tested that yet.
 
 ## 5. Limitations
 
-1. The simulated cohort demonstrates the method only. On real data, AuraZ-R reaches AUROC 0.775, a moderate result.
-2. The real-data pilot used a sample (4,989 stays) because bulk download was throttled; CIs are wide.
+1. The simulated cohort demonstrates the method only. On real data AuraZ-R reaches AUROC 0.82 pooled but about 0.74 across hospitals.
+2. We used 37% of the PhysioNet 2019 stays (downloads were throttled); only two US hospitals, no race/ethnicity audit, and subgroup differences rest on small groups.
 3. Measurement-recency features partly encode clinician behaviour; the model learns from care patterns as well as physiology.
 4. There is no prospective or silent-mode validation and no subgroup fairness audit yet. This is not a medical device.
 5. Hardware results are for CPU inference only; NNPA acceleration is untested.
 
 ## 6. Roadmap
 
-1. Real-data model: the full 40k stays, per-hospital calibration, external validation on MIMIC-IV or eICU.
+1. Real-data model: the full 40k stays, per-hospital recalibration, validation on MIMIC-IV or eICU.
 2. Telum II: compile the AuraZ-R trees with ONNX + zDLC on LinuxONE and benchmark CPU vs NNPA on the z17.
 3. Fairness audit by age and sex; calibration plots per subgroup.
 4. HL7/FHIR integration and a silent-mode pilot with clinicians before any alerting.

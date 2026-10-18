@@ -14,7 +14,7 @@ AuraZ scores ICU vitals every hour and warns clinicians hours before sepsis onse
 | Latency Lab | **Measured** on the viewer's CPU. Cloud path is a labelled, adjustable assumption |
 | IBM Z Telum II hardware numbers | **Not yet measured.** Next milestone: LinuxONE Community Cloud + ONNX / zDLC |
 | IBM LinuxONE inference service (`ml/serve.py`) | **Real.** Standard-library Python, runs on s390x with nothing to install; the app's Live Replay and 200-bed Ward score on it once connected, and the IBM Z tab verifies remote = local results |
-| Real-data model AuraZ-R (`ml/train_physionet_gbm.py`) | **Real ICU data, PhysioNet 2019 (4,989 stays): AUROC 0.775 (95% CI 0.72–0.82); 0.73 without ICU-time features.** At SIRS's alarm rate: 94% of septic patients caught vs 88%. Our first 16-feature model got only 0.61 on real data. See `docs/REAL_DATA_PILOT.md` |
+| Real-data model AuraZ-R (`ml/train_physionet_gbm.py`) | **Real ICU data, 14,635 PhysioNet 2019 stays: AUROC 0.82 pooled (95% CI 0.79–0.84), 0.79 without ICU-time features; about 0.74 when tested on the other hospital.** Uncertainty coverage does not transfer across hospitals. See `docs/REAL_DATA_PILOT.md` and `docs/MODEL_CARD.md` |
 
 ## Held-out results (simulated cohort, 3,000 test stays)
 
@@ -35,7 +35,7 @@ Sepsis scoring is a streaming, latency-sensitive, privacy-bound workload: exactl
 ```bash
 python3 ml/train.py            # simulated cohort -> public/*.json
 python3 ml/train_physionet_gbm.py  # real-data model AuraZ-R (after downloading PhysioNet 2019 into data/physionet2019/)
-npm test                       # 18 tests: scorers vs reference values, conformal, metrics consistency
+npm test                       # 18 app tests; python3 -m unittest ml/test_serve.py for the server (incl. FHIR)
 npm install && npm run dev     # http://localhost:5174
 ```
 
@@ -51,7 +51,7 @@ Tabs: **Live Replay** · **Ward** (200 beds) · **Validation** · **IBM Z** · A
 
 ## Verified on IBM LinuxONE
 
-Both models run on the mainframe: the real-data AuraZ-R trees (`POST /score_real`) scored 300 real held-out rows on the z17 with results identical to sklearn and the browser (maximum difference 0.0), about 225 µs per row in pure Python.
+Both models run on the mainframe: the real-data AuraZ-R trees (`POST /score_real`) scored 300 real held-out rows of the final model on the z17 with results identical to sklearn and the browser (maximum difference 0.0), about 150–200 µs per row in pure Python.
 
 
 Run through the app against a real IBM z17 (Telum II, machine type 9175, `nnpa` flag present) on the LinuxONE Community Cloud: remote scores match the local reference model exactly (max difference 0.0), server-side compute is ~12 µs per request in pure Python, and the 200-bed ward scores in one batch. The ~445 ms median round trip in that test is the network distance to the data centre, which is the argument for scoring beside the data.

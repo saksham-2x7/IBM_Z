@@ -1,66 +1,68 @@
 @import "tailwindcss";
 
-@layer base {
-  :root {
-    --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-    --color-accent: #06b6d4; /* Single cyan accent */
-  }
+/* Light, minimal theme: paper + ink + one blue accent.
+   The slate scale is deliberately inverted (950 = white card, 100 = ink) so existing utility classes read correctly on light. */
+@theme {
+  --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; /* labels and numbers: sans, tabular */
 
+  --color-white: #0f172a;           /* "text-white" headings become ink */
+  --color-slate-50:  #0b0f19;
+  --color-slate-100: #111827;
+  --color-slate-200: #1f2735;
+  --color-slate-300: #323b4a;
+  --color-slate-400: #4b5565;
+  --color-slate-500: #6b7587;
+  --color-slate-600: #9aa3b2;
+  --color-slate-700: #d3d8e0;
+  --color-slate-800: #e5e8ee;
+  --color-slate-900: #ffffff;
+  --color-slate-950: #f3f5f8;
+
+  /* accent (was cyan) */
+  --color-cyan-100: #e6effa; --color-cyan-200: #1a4f9f; --color-cyan-300: #1a4f9f; --color-cyan-400: #1d5fb4;
+  --color-cyan-500: #1d5fb4; --color-cyan-600: #174e96; --color-cyan-700: #9db9de;
+  --color-cyan-800: #c9dcf3; --color-cyan-900: #dfeaf8; --color-cyan-950: #edf3fb;
+  --color-blue-500: #1d5fb4; --color-blue-600: #174e96;
+
+  /* semantic */
+  --color-emerald-300: #0d6b45; --color-emerald-400: #0f7a4d; --color-emerald-500: #15803d;
+  --color-emerald-800: #a8d8bb; --color-emerald-900: #d6eddf; --color-emerald-950: #ecf7f0;
+  --color-amber-200: #854d0e; --color-amber-300: #92400e; --color-amber-400: #a05a07; --color-amber-500: #b45309;
+  --color-amber-700: #e5c99a; --color-amber-800: #ecd7ae; --color-amber-900: #f6e9cf; --color-amber-950: #fbf4e4;
+  --color-rose-300: #9f1239; --color-rose-400: #be123c; --color-rose-500: #e11d48;
+  --color-orange-400: #c2410c; --color-orange-500: #ea580c;
+
+  --color-orange-200: #7c2d12; --color-orange-300: #9a3412; --color-orange-800: #f0cdb2; --color-orange-900: #f8e1cf; --color-orange-950: #fdf1e7;
+  --color-rose-200: #881337; --color-rose-800: #f1bcc6; --color-rose-900: #f8d9df; --color-rose-950: #fdecef;
+  --color-sky-400: #0369a1; --color-sky-500: #0284c7; --color-sky-600: #0369a1;
+
+  --radius-sm: 4px; --radius-md: 6px; --radius-lg: 8px; --radius-xl: 8px; --radius-2xl: 10px;
+}
+
+@layer base {
   body {
     font-family: var(--font-sans);
-    background-color: #06080d;
-    color: #f1f5f9;
+    background-color: #f7f8fa;
+    color: #111827;
+    font-variant-numeric: tabular-nums;
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
   }
-
-  code, pre, .font-mono {
-    font-family: var(--font-mono);
-  }
-
-  /* Accessible focus indicators across all interactive elements (WCAG 2.1 AA) */
-  :focus-visible {
-    outline: 2px solid #06b6d4;
-    outline-offset: 2px;
-  }
-
-  /* Respect user motion preferences */
+  code, pre { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  :focus-visible { outline: 2px solid #1d5fb4; outline-offset: 2px; }
   @media (prefers-reduced-motion: reduce) {
-    *, ::before, ::after {
-      animation-duration: 0.01ms !important;
-      animation-iteration-count: 1 !important;
-      transition-duration: 0.01ms !important;
-      scroll-behavior: auto !important;
-    }
+    *, ::before, ::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
   }
 }
 
-/* Custom scrollbars - minimal, clean, no glows */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
+/* flatten: no glows or heavy shadows anywhere */
+*, ::before, ::after { --tw-shadow: 0 0 #0000; }
+.backdrop-blur, .backdrop-blur-xl { backdrop-filter: none; }
 
-::-webkit-scrollbar-track {
-  background: #090d16;
-}
-
-::-webkit-scrollbar-thumb {
-  background: #1e293b;
-  border-radius: 9999px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #334155;
-}
-
-/* Utility for hiding scrollbar where touch swiping is preferred */
-.scrollbar-none {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-.scrollbar-none::-webkit-scrollbar {
-  display: none;
-}
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: #f3f5f8; }
+::-webkit-scrollbar-thumb { background: #c5ccd6; border-radius: 9999px; }
+::-webkit-scrollbar-thumb:hover { background: #a8b1be; }
+.scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
+.scrollbar-none::-webkit-scrollbar { display: none; }

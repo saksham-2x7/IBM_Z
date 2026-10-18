@@ -55,7 +55,7 @@ export const App: React.FC = () => {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#06080d] font-sans text-slate-100 selection:bg-cyan-500/30">
+    <div className="flex min-h-screen flex-col bg-[#f7f8fa] font-sans text-slate-100 selection:bg-cyan-500/30">
       <Header activeTab={tab} setActiveTab={setTab} ibmz={{ connected: !!info, label }} />
 
       <main className="flex-1 pb-16">
@@ -100,7 +100,7 @@ export const App: React.FC = () => {
         </section>
       </main>
 
-      <footer className="border-t border-slate-800/80 bg-[#070a12]/50 px-4 py-4 text-center text-xs text-slate-400 sm:px-6">
+      <footer className="border-t border-slate-800/80 bg-slate-900 px-4 py-4 text-center text-xs text-slate-400 sm:px-6">
         <div className="mx-auto max-w-7xl">
           AuraZ · IBM Z Datathon 2026 · Technology for Good · Research prototype on a simulated cohort, not a medical device
         </div>
