@@ -1,11 +1,23 @@
 import React, { useEffect, useState } from 'react';
 import { Audit, AuditGroup, Metrics, RealMetrics } from '../lib/model';
 
+interface Recal { n_stays: number; directions: Record<string, { before: { coverage_septic: number; coverage_nonseptic: number }; after: Record<string, { coverage_septic_mean: number; coverage_nonseptic_mean: number; uncertain_fraction_mean: number }> }> }
+
 const pct = (v: number, d = 0) => `${(v * 100).toFixed(d)}%`;
 
 export const ValidationPanel: React.FC<{ m: Metrics }> = ({ m }) => {
   const [real, setReal] = useState<RealMetrics | null>(null);
   const [audit, setAudit] = useState<Audit | null>(null);
+  const [full, setFull] = useState<RealMetrics | null>(null);
+  const [recal, setRecal] = useState<Recal | null>(null);
+  useEffect(() => {
+    fetch(`${import.meta.env.BASE_URL}full/recalibration.json`).then((r) => (r.ok ? r.json() : Promise.reject())).catch(() => fetch(`${import.meta.env.BASE_URL}recalibration.json`).then((r) => (r.ok ? r.json() : null))).then(setRecal).catch(() => setRecal(null));
+  }, []);
+  const [fullAudit, setFullAudit] = useState<Audit | null>(null);
+  useEffect(() => {
+    fetch(`${import.meta.env.BASE_URL}full/metrics_physionet.json`).then((r) => (r.ok ? r.json() : null)).then(setFull).catch(() => setFull(null));
+    fetch(`${import.meta.env.BASE_URL}full/audit_physionet.json`).then((r) => (r.ok ? r.json() : null)).then(setFullAudit).catch(() => setFullAudit(null));
+  }, []);
   useEffect(() => { fetch(`${import.meta.env.BASE_URL}audit_physionet.json`).then((r) => (r.ok ? r.json() : null)).then(setAudit).catch(() => setAudit(null)); }, []);
   useEffect(() => { fetch(`${import.meta.env.BASE_URL}metrics_physionet.json`).then((r) => r.json()).then(setReal).catch(() => setReal(null)); }, []);
   const a = m.alerting, W = 300, H = 220;
@@ -22,10 +34,27 @@ export const ValidationPanel: React.FC<{ m: Metrics }> = ({ m }) => {
       <div className="rounded-2xl border border-amber-700/40 bg-amber-950/20 p-4 text-sm text-amber-200">
         <b>Transparency:</b> {m.data} The cards below are a <b>method demonstration</b> on a patient-level held-out test cohort of {m.cohorts.test.toLocaleString()} simulated stays ({m.cohorts.test_septic} septic). Real-data results from the same pipeline are in the PhysioNet panel just below.</div>
       <nav className="flex flex-wrap gap-2 text-sm" aria-label="Jump to section">
-        {[['#real', 'Real ICU data'], ['#audit', 'Other hospital + fairness'], ['#sim', 'Simulated demo']].map(([h, t]) => (
+        {[...(full ? [['#full', 'All stays (full dataset)']] : []), ['#real', 'Real ICU data (first run)'], ['#audit', 'Other hospital + fairness'], ['#sim', 'Simulated demo']].map(([h, t]) => (
           <a key={h} href={h} className="rounded-full border border-slate-700 bg-slate-900 px-3 py-1 font-medium text-cyan-300 transition-colors hover:border-cyan-400 hover:bg-cyan-950">{t}</a>
         ))}
       </nav>
+      {full && (
+        <div id="full" className="rounded-2xl border border-cyan-800 bg-slate-900/60 p-5">
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <h3 className="font-semibold text-white">Full dataset · AuraZ-R on every PhysioNet 2019 stay</h3>
+            <span className="text-xs text-slate-400">{(full.cohorts.train + full.cohorts.calibration + full.cohorts.test).toLocaleString()} stays · {full.cohorts.test.toLocaleString()} held out ({full.cohorts.test_septic} septic) · same method as the first run</span>
+          </div>
+          <div className="mt-3 grid gap-3 font-mono sm:grid-cols-4">
+            {[['AUROC', full.auroc.toFixed(3), `95% CI ${full.auroc_ci95[0].toFixed(2)}–${full.auroc_ci95[1].toFixed(2)}`],
+              ['Without ICU-time features', full.ablations.without_icu_time.toFixed(3), `and without recency: ${full.ablations.without_icu_time_and_recency.toFixed(3)}`],
+              ['Septic caught at SIRS’s alarm rate', full.alerting.model_at_sirs_false_alert_rate ? pct(full.alerting.model_at_sirs_false_alert_rate.sensitivity) : '—', `SIRS ${pct(full.alerting.baseline_sirs_rule.sensitivity)}`],
+              ['At a different hospital', fullAudit ? Object.values(fullAudit.cross_hospital).map((x) => x.auroc.toFixed(2)).join(' / ') : '—', 'train A → test B / B → A']].map(([t, val, s]) => (
+              <div key={t} className="rounded-xl bg-slate-950 p-3"><div className="text-[11px] text-slate-500">{t}</div><div className="text-xl font-bold text-slate-100">{val}</div><div className="text-[11px] text-slate-500">{s}</div></div>
+            ))}
+          </div>
+          <p className="mt-3 text-sm text-slate-300">The first run below used a 37% sample of these stays. This card uses every stay in PhysioNet training sets A and B with the identical pipeline, split and settings, so the two can be compared directly. Full tables are in <code>docs/FULL_DATA_RESULTS.md</code>.</p>
+        </div>
+      )}
       {real && (
         <div id="real" className="rounded-2xl border border-emerald-800/50 bg-slate-900/60 p-5">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
@@ -82,6 +111,23 @@ export const ValidationPanel: React.FC<{ m: Metrics }> = ({ m }) => {
             </tbody>
           </table>
           <p className="mt-2 text-xs text-slate-400">Small subgroups have wide confidence intervals; differences here are a screening signal, not proof of bias.</p>
+        </div>
+      )}
+      {recal && (
+        <div id="recal" className="rounded-2xl border border-slate-700 bg-slate-900/60 p-5">
+          <h3 className="font-semibold text-white">Fixing the uncertainty guarantee at a new hospital</h3>
+          <p className="mt-1 text-sm text-slate-400">The model is not retrained. Only the uncertainty thresholds are recalibrated using a small number of stays from the new hospital (mean of 20 random draws, tested on the rest of that hospital).</p>
+          <table className="mt-3 w-full text-sm">
+            <thead><tr className="text-left text-xs text-slate-500"><th className="py-1">Direction</th><th>Stays used to recalibrate</th><th>Septic coverage</th><th>Non-septic coverage</th><th>Says “uncertain”</th></tr></thead>
+            <tbody>
+              {Object.entries(recal.directions).flatMap(([k, d]) => [
+                <tr key={k + 'b'} className="border-t border-slate-800"><td className="py-1.5 text-slate-300">{k.replace('train_', 'Train ').replace('_test_', ' → test ')}</td><td className="text-amber-300">none (before)</td><td className="text-amber-300">{pct(d.before.coverage_septic)}</td><td className="text-amber-300">{pct(d.before.coverage_nonseptic)}</td><td className="text-slate-500">—</td></tr>,
+                ...Object.entries(d.after).filter(([kk]) => ['100', '200', '400'].includes(kk)).map(([kk, a]) => (
+                  <tr key={k + kk} className="border-t border-slate-800"><td className="py-1.5 text-slate-500">&nbsp;</td><td className="text-slate-300">{kk} stays</td><td className="font-semibold text-emerald-400">{pct(a.coverage_septic_mean)}</td><td className="font-semibold text-emerald-400">{pct(a.coverage_nonseptic_mean)}</td><td className="text-slate-400">{pct(a.uncertain_fraction_mean)}</td></tr>)),
+              ])}
+            </tbody>
+          </table>
+          <p className="mt-2 text-xs text-slate-400">Target is 90% for both classes. A few hundred local stays restore it, at the cost of the model abstaining (“uncertain”) more often. With 25–50 stays the septic coverage is still unreliable.</p>
         </div>
       )}
       <div id="sim" className="grid gap-5 md:grid-cols-4">
