@@ -77,7 +77,7 @@ Early warning helps only if clinicians trust it. Frequent alarms cause desensiti
 - The **real-data AuraZ-R trees** (`POST /score_real`) ran on the z17 too: 300 real held-out rows from the final model matched sklearn exactly (maximum difference 0.0), at about 150–200 µs per row in pure Python. The FHIR endpoint (`POST /fhir/score`) also ran on the z17.
 - The end-to-end round trip from India was about 445 ms median, all network distance. That gap is the case for scoring where the data already lives.
 
-**Telum II accelerator (NNPA).** We also ran a neural-network variant of the real-data model, **AuraZ-N** (108→64→32→1, AUROC 0.800 vs 0.819 for the trees), on the on-chip accelerator through IBM's zDNN library (`ml/nnpa_mlp.c`). On 32,768 held-out patient-hours the accelerator took **10.9 ms versus 354.9 ms for a CPU loop (32.6×)**, with AUROC unchanged (0.80858 vs 0.80859 in FP32) and 99.994% identical alert decisions (the chip computes in 16-bit). The accelerator is not a universal win: our 16-feature logistic model ran 2–4× *slower* on it because it is too small, and the gradient-boosted trees (AuraZ-R) are not an accelerator workload. The CPU baseline is a naive single-thread loop, so the speed-up overstates the gain over a tuned CPU library. Details: `docs/NNPA.md`.
+**Telum II accelerator (NNPA).** We also ran a neural-network variant of the real-data model, **AuraZ-N** (108→64→32→1, AUROC 0.800 vs 0.819 for the trees), on the on-chip accelerator through IBM's zDNN library (`ml/nnpa_mlp.c`). On 32,768 held-out patient-hours the accelerator took **10.9 ms versus 354.9 ms for a plain CPU loop (32.6×)** and versus 15.9 ms for OpenBLAS, a tuned CPU library, on one thread (1.5×; 1.2× against both of the VM's threads), with AUROC unchanged (0.80858 vs 0.80859 in FP32) and 99.994% identical alert decisions (the chip computes in 16-bit). The accelerator is not a universal win: our 16-feature logistic model ran 2–4× *slower* on it because it is too small, and the gradient-boosted trees (AuraZ-R) are not an accelerator workload. Details: `docs/NNPA.md`.
 
 **Load test.** With two worker processes on the 2-vCPU VM the AuraZ-R service peaked at 11,870 scores per second (6,492 with one worker), with 0.27 ms median latency for single patient-hours. The test found and fixed a real bug: a TCP delayed-ACK stall had pinned single requests at 50 ms.
 
@@ -87,7 +87,7 @@ Early warning helps only if clinicians trust it. Frequent alarms cause desensiti
 2. We used 37% of the PhysioNet 2019 stays (downloads were throttled); only two US hospitals, no race/ethnicity audit, and subgroup differences rest on small groups.
 3. Measurement-recency features partly encode clinician behaviour; the model learns from care patterns as well as physiology.
 4. There is no prospective or silent-mode validation, and no race/ethnicity audit (the data has none). This is not a medical device.
-5. The accelerator result is for AuraZ-N, which is slightly less accurate than AuraZ-R; the CPU baseline is a naive loop; load numbers share a 2-vCPU VM with the load generator.
+5. The accelerator result is for AuraZ-N, which is slightly less accurate than AuraZ-R; the 33× is against a plain loop (1.2–1.5× against tuned OpenBLAS); load numbers share a 2-vCPU VM with the load generator.
 
 ## 6. Roadmap
 

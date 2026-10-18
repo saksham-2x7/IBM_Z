@@ -13,6 +13,7 @@ run = json.load(open(sys.argv[2]))
 exp = np.fromfile(os.path.join(B, "expected.bin"), dtype="<f4"); y = np.fromfile(os.path.join(B, "y.bin"), dtype=np.int8)
 kern = json.load(open(os.path.join(R, "build", "nnpa", "kernels.json"))) if os.path.exists(os.path.join(B, "kernels.json")) else None
 mlp = json.load(open(os.path.join(R, "public", "metrics_mlp.json")))
+blas = json.load(open(os.path.join(B, "openblas.json"))) if os.path.exists(os.path.join(B, "openblas.json")) else []
 res = dict(host="IBM z17 (machine 9175, Telum II), LinuxONE Community Cloud, IBM zDNN 1.0.1",
            model=mlp["model"], rows=int(len(y)), septic_rows=int(y.sum()),
            auroc_fp32_sklearn=float(roc_auc_score(y, exp)), auroc_on_nnpa=float(roc_auc_score(y, out)),
@@ -20,8 +21,9 @@ res = dict(host="IBM z17 (machine 9175, Telum II), LinuxONE Community Cloud, IBM
            full_test_auroc_fp32=mlp["auroc"], full_test_auroc_ci95=mlp["auroc_ci95"],
            max_abs_prob_diff=float(np.abs(out - exp).max()), mean_abs_prob_diff=float(np.abs(out - exp).mean()),
            alert_agreement_at_threshold=None, timing=run, kernel_benchmark=kern,
+           cpu_openblas=[dict(threads=int(r["openblas_threads"]), ms=r["openblas_ms"], nnpa_speedup_total=r["openblas_ms"] / run["nnpa_total_ms"], nnpa_speedup_compute=r["openblas_ms"] / run["nnpa_compute_ms"]) for r in blas],
            notes=["NNPA computes in 16-bit DLFLOAT16; outputs differ slightly from FP32.",
-                  "CPU baseline is a naive single-thread C loop (-O2), not an optimised BLAS, so speedups overstate the gain over a tuned CPU library.",
+                  "The 32.6x figure is against a naive single-thread C loop. Against OpenBLAS (vector-tuned for s390x) the accelerator is about 1.5x faster than 1 CPU thread and 1.2x faster than both CPU threads on this 2-vCPU VM.",
                   "AuraZ-R (gradient-boosted trees) is a CPU model; tree ensembles are not an NNPA workload."])
 # decision agreement at a 5% alert rate
 thr = float(np.quantile(exp, 0.95)); res["alert_agreement_at_threshold"] = float(((exp >= thr) == (out >= thr)).mean()); res["alert_threshold_top5pct"] = thr

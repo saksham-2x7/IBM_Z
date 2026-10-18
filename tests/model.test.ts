@@ -135,6 +135,11 @@ describe('IBM z17 measurements (public/nnpa_z17.json, loadtest_z17.json, metrics
     expect(mlp.auroc).toBeGreaterThanOrEqual(mlp.auroc_ci95[0]);
     expect(mlp.auroc).toBeLessThanOrEqual(mlp.auroc_ci95[1]);
   });
+  it('records the tuned-library comparison and it is a smaller speed-up than the plain loop', () => {
+    const b = load<{ cpu_openblas: { threads: number; nnpa_speedup_total: number }[]; timing: { speedup_total_vs_cpu: number } }>('nnpa_z17.json');
+    expect(b.cpu_openblas.length).toBeGreaterThanOrEqual(2);
+    for (const r of b.cpu_openblas) expect(r.nnpa_speedup_total).toBeLessThan(b.timing.speedup_total_vs_cpu);
+  });
   it('a second worker increases throughput', () => {
     expect(lt.workers_2.peak.scores_per_s).toBeGreaterThan(lt.workers_1.peak.scores_per_s * 1.3);
   });

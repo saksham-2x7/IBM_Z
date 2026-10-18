@@ -1,30 +1,28 @@
-# AuraZ demo video: script, tech stack and explanations
+# AuraZ demo video: 3-minute script, tech stack and explanations
 
-Length: about 4:00. Record at 1920×1080 with the browser zoomed to 100%. Every number below comes from `public/metrics*.json`, `public/audit_physionet.json` or the live app.
+**Hard limit: 3:00.** The narration below is 318 spoken words, about 2:10 of speech at 150 words per minute. Add about 30 to 40 seconds for clicks and pauses and it lands at roughly 2:45. Record at 1920×1080, browser at 100% zoom. Every number comes from the app on screen or `public/*.json`.
 
-## 0. Before you record (10 minutes)
-
+## 0. Before you record (5 minutes)
 ```bash
-cd IBM_Z && npm install && npm run dev          # app at http://localhost:5174
-python3 ml/serve.py 8080                         # local inference service (optional, for the IBM Z tab)
+cd IBM_Z && npm install && npm run dev                      # http://localhost:5174
+ssh -N -L 8080:localhost:8080 -i <key>.pem linux1@<VM-IP>   # keep this open: the app auto-connects to the z17 on localhost:8080
 ```
-- **To show the real mainframe:** start `python3 ml/serve.py 8080` on the LinuxONE VM, then `ssh -N -L 8080:localhost:8080 -i <key>.pem linux1@<VM-IP>` on your laptop. Check `curl localhost:8080/health` shows `"system": "IBM z17 (Telum II)"`. If the VM is gone, skip Part 4's live connect and show `docs/demo/04_ibm_z_remote_verification.png` instead, and say it was recorded on the z17.
-- **Recording tools:** QuickTime (File → New Screen Recording) or OBS, plus any editor (iMovie, CapCut). Mic on, notifications off, browser in full screen, light theme as shipped.
-- Rehearse once. Speak slowly; judges read the screen while you talk.
+The header pill and the hero chip must say **IBM z17 (Telum II)** before you start. If the VM is gone, run `python3 ml/serve.py 8080` locally and say "recorded earlier on the z17" over `docs/demo/04_ibm_z_remote_verification.png`. Tools: QuickTime or OBS to record, any editor to trim. Rehearse once with a stopwatch; if you run long, cut the sentences marked ✂.
 
-## 1. The 3:45 script
+## 1. The 3:00 script
 
-| Time | On screen | Say (plain language) | Technical add-on (say only if you have time) |
-|---|---|---|---|
-| **0:00–0:20** | Live Replay tab, nothing clicked | "Sepsis is a life-threatening reaction to infection, and every hour of delayed treatment matters. Hospitals have alarms for it, but they ring so often that nurses learn to ignore them. AuraZ is an early-warning system that rings less often, earlier, and tells you why." | "It predicts Sepsis-3 onset within 6 hours, scored every hour per patient." |
-| **0:20–1:05** | Click **TEST-01**, drag the slider to **hour 19** | "This is a patient the model has never seen. The line is the predicted risk. At hour 19 it crosses the alert line, two hours before the patient actually becomes septic at hour 21. On the right, in plain English, it says why: rising temperature, rising breathing rate, faster heartbeat. It also says 'sepsis not ruled out', which is its honesty label." | "The explanation is exact: each feature's contribution to the log-odds equals its SHAP value because the demo model is linear. The label comes from class-conditional conformal prediction at 90% per class." |
-| **1:05–1:35** | Click **TEST-05 · Stable**, slide to **hour 12**, then **hour 30** | "Here is a stable patient. The system says 'ruled out' and stays quiet. Our test set also has look-alikes, like post-surgery patients whose heart rate is high for harmless reasons, to see if it overreacts." | "Alerts use a threshold chosen on a separate calibration set under a budget of 15 false alerts per 100 patient-days." |
-| **1:35–2:25** | **Validation** tab. Start at the top (real-data panel) | "Now the honest part. First we tested on made-up patients and it looked great, but that is only a demonstration. So we trained on real ICU data from PhysioNet: about 14,600 patients. Our first model only reached 0.61, so we rebuilt it using every measurement and how recently each was taken. The new model, AuraZ-R, scores 0.82 on patients it has never seen. At the same alarm volume as the standard SIRS rule, it catches 95% of septic patients early versus 89%." | "AUROC 0.819, 95% CI 0.79 to 0.84, 175 septic test stays; 0.794 without ICU-time features, 0.766 without recency features, so it is not just learning how long someone has been in the ICU." |
-| **2:25–2:50** | Scroll to **External validation and fairness audit** | "We also tested it on a different hospital than it was trained on. It drops to about 0.74, and its confidence guarantee weakens, so each hospital must recalibrate before using it. We checked by sex and age too: ranking accuracy is similar, but at one fixed alert level some groups get flagged less often, which we flag for follow-up. We would rather show you our weak spots than hide them." | "Train A → test B: 0.737; B → A: 0.745. Septic-class coverage 70% in A→B. Subgroup alert sensitivity ranges 23% to 54% on groups of 35 to 119 septic stays." |
-| **2:50–3:35** | **IBM Z** tab: scroll the recorded accelerator panel, then **Connect** → **Run AuraZ-R real-data trees** | "Why IBM Z? Hospital data already lives on systems like this, so AuraZ is built to score where the data is. This is a real IBM z17 mainframe. Our service runs on it with nothing to install, and its answers match our reference exactly. IBM's chip also has an AI accelerator. We built a neural version of the model that runs on it: 32,768 patient-hours in 11 milliseconds instead of 355, 33 times faster, and the accuracy is identical. We also show where the accelerator does not help: a tiny model is actually slower on it, and our best model, the trees, stays on the regular processor. The 400 milliseconds you see in the live connection is just the distance to the data centre." | "AuraZ-N, 108→64→32→1, AUROC 0.800 vs 0.819 for trees; zDNN 1.0.1 on machine 9175; AUROC on NNPA 0.80858 vs 0.80859 FP32; 99.994% identical alerts; CPU baseline is a naive single-thread loop. Load test: 11,870 scores/s peak, 0.27 ms median, which found a Nagle stall. A FHIR endpoint returns a RiskAssessment." |
-| **3:35–4:00** | **Ward** tab → **Play** → click a bed | "In a ward, all 200 beds are scored together every hour, and clicking any bed opens that patient. AuraZ: explainable, honest about uncertainty, and built to live next to the data on IBM Z. Thank you." | "One batch request per hour to the mainframe; the ward view shows the scoring time." |
+| Time | On screen (click path) | Say |
+|---|---|---|
+| **0:00–0:15** | Live Replay page, nothing clicked | "Sepsis is a body-wide reaction to infection, and every hour of delay hurts. Hospital alarms ring so often that staff ignore them. AuraZ rings less, earlier, and tells you why." *(35 words)* |
+| **0:15–0:55** | Click **TEST-01**, drag slider to **hour 19**. Then click **TEST-05**, drag to **hour 12**. | "This patient has never been seen by the model. At hour 19 the risk crosses the alert line, two hours before sepsis starts. It explains in plain English: rising temperature, breathing and heart rate. And it says 'sepsis not ruled out'. ✂ Here is a stable patient. Quiet, and it says 'ruled out'. The model also admits when it is unsure." *(62 words)* |
+| **0:55–1:35** | **Validation** tab, top of the page. Scroll slowly to the cross-hospital table. | "Now the honest part. On real ICU data, about fourteen thousand patients from PhysioNet, our first model failed, so we rebuilt it. The new one scores point eight two on unseen patients. At the same alarm volume as the standard rule it catches ninety-five percent of septic patients versus eighty-nine. ✂ We also tested on a different hospital. It drops to point seven four, so each hospital must recalibrate. We show our weak spots." *(78 words)* |
+| **1:35–2:30** | **IBM Z** tab (already connected). Scroll to the accelerator card, then the load-test card. Click **Run AuraZ-R real-data trees**. | "Why IBM Z? Hospital data already lives on systems like this, so AuraZ is built to score where the data is. This is a real IBM z17 mainframe, running our service with nothing to install, and it matches our reference exactly. IBM's chip has an AI accelerator, so we built a neural version of the model for it: thirty-two thousand patient-hours in eleven milliseconds: thirty-three times faster than a plain processor loop and about one and a half times faster than a tuned math library, with accuracy unchanged. ✂ We also show where it does not help: a tiny model is slower on it, and our best model, the trees, stays on the regular processor. Load testing found a real bug and reached eleven thousand scores a second." *(112 words)* |
+| **2:30–2:50** | **Ward** tab → **Play** → click an orange bed | "A ward of two hundred beds is scored together every hour. Click any bed to open that patient." *(20 words)* |
+| **2:50–3:00** | Back to the hero banner | "AuraZ: explainable, honest about uncertainty, and built to run beside the data on IBM Z. Built with React, Python, scikit-learn and IBM's zDNN. Thank you." *(26 words)* |
 
-**If asked about the "uncertain" label vs the alert:** the alert means "act now" (budgeted to limit alarms); the label means "can the model exclude sepsis at 90% confidence" and is deliberately more cautious.
+**318 spoken words in total (about 290 without the ✂ sentences).** If a rehearsal runs past 2:55, drop the ✂ lines first.
+
+**If a judge asks later (do not put in the video):** the 355 ms is a plain single-thread CPU loop; against OpenBLAS it is 15.9 ms (1 thread) or 12.7 ms (2 threads) versus 10.9 ms on the chip, so 1.5× and 1.2×. The accelerator runs AuraZ-N (AUROC 0.80); the tree model AuraZ-R (0.82) runs on the CPU. The alert label and the alert line are different things: the line means "act now" (budgeted to limit alarms), the label means "can sepsis be excluded at 90% confidence".
 
 ## 2. Tech stack and tools
 
@@ -73,9 +71,9 @@ python3 ml/serve.py 8080                         # local inference service (opti
 | Cross-hospital AUROC | 0.737 and 0.745 | `public/audit_physionet.json` |
 | Simulated demo AUROC | 0.818; 75% vs 48%; 11.7 vs 47.3 false alerts | `public/metrics.json` |
 | z17 | machine 9175, Telum II | live `/health` |
-| Accelerator speed-up | 32.6× (10.9 ms vs 354.9 ms, 32,768 rows), AUROC 0.80858 vs 0.80859 | `public/nnpa_z17.json` |
+| Accelerator speed-up | 32.6× vs a plain loop; 1.5× vs OpenBLAS 1 thread, 1.2× vs 2 threads (10.9 ms vs 354.9 / 15.9 / 12.7 ms, 32,768 rows); AUROC 0.80858 vs 0.80859 | `public/nnpa_z17.json` |
 | Load test | 11,870 scores/s peak (2 workers), 0.27 ms median single request | `public/loadtest_z17.json` |
 
 ## 6. Do not say
 
-"FDA", "clinically proven", "the trees run on the accelerator" (only the neural model does), "33× faster than a tuned CPU" (the baseline is a naive loop), "world's first", "works at every hospital", or any number not in the table above.
+"FDA", "clinically proven", "the trees run on the accelerator" (only the neural model does), "33× faster than a tuned CPU" (it is 1.2–1.5× against OpenBLAS), "world's first", "works at every hospital", or any number not in the table above.
