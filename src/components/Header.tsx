@@ -1,7 +1,7 @@
 import React, { useRef } from 'react';
 import { Activity, CheckCircle2, Server } from 'lucide-react';
 
-export type Tab = 'replay' | 'ward' | 'validation' | 'ibmz' | 'architecture' | 'submission';
+export type Tab = 'replay' | 'ward' | 'validation' | 'ibmz' | 'architecture';
 
 const TABS: [Tab, string][] = [
   ['replay', 'Live Replay'],
@@ -9,7 +9,6 @@ const TABS: [Tab, string][] = [
   ['validation', 'Validation'],
   ['ibmz', 'IBM Z'],
   ['architecture', 'Architecture'],
-  ['submission', 'Submission'],
 ];
 
 interface Props {
@@ -42,13 +41,14 @@ export const Header: React.FC<Props> = ({ activeTab, setActiveTab, ibmz }) => {
   };
 
   return (
-    <header className="sticky top-0 z-40 border-b border-slate-800 bg-[#070a12]/95 backdrop-blur-sm">
+    <header className="sticky top-0 z-40 border-b border-slate-800 bg-slate-900/95 backdrop-blur-sm">
       <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-3 lg:flex-row lg:items-center lg:justify-between lg:gap-4 sm:px-6">
         {/* Top row on mobile/tablet: Brand & IBM Z status */}
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <div
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-cyan-500/10 text-cyan-400 border border-cyan-500/20"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-slate-900"
+              style={{ background: "linear-gradient(135deg,#0f62fe,#8a3ffc)", color: "#fff" }}
               aria-hidden="true"
             >
               <Activity className="h-5 w-5" />
@@ -67,7 +67,7 @@ export const Header: React.FC<Props> = ({ activeTab, setActiveTab, ibmz }) => {
           <button
             type="button"
             onClick={() => setActiveTab('ibmz')}
-            className="flex lg:hidden items-center gap-2 rounded-full border border-slate-700 bg-slate-900/80 px-3 py-1.5 text-xs text-slate-300 transition-colors hover:border-slate-600 hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#070a12]"
+            className="flex lg:hidden items-center gap-2 rounded-full border border-slate-700 bg-slate-900/80 px-3 py-1.5 text-xs text-slate-300 transition-colors hover:border-slate-600 hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
             aria-label={`IBM Z Status: ${ibmz.label}. Open IBM Z tab`}
           >
             <span
@@ -99,7 +99,7 @@ export const Header: React.FC<Props> = ({ activeTab, setActiveTab, ibmz }) => {
                 tabIndex={isActive ? 0 : -1}
                 onClick={() => setActiveTab(k)}
                 onKeyDown={(e) => handleKeyDown(e, idx)}
-                className={`whitespace-nowrap rounded-lg px-3.5 py-2 text-xs sm:text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#070a12] min-h-[40px] flex items-center ${
+                className={`whitespace-nowrap rounded-lg px-3.5 py-2 text-xs sm:text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 min-h-[40px] flex items-center ${
                   isActive
                     ? 'bg-cyan-500 font-semibold text-slate-950 shadow-sm'
                     : 'text-slate-400 hover:bg-slate-800/80 hover:text-slate-200'
@@ -116,7 +116,7 @@ export const Header: React.FC<Props> = ({ activeTab, setActiveTab, ibmz }) => {
           <button
             type="button"
             onClick={() => setActiveTab('ibmz')}
-            className="flex items-center gap-2 rounded-full border border-slate-700 bg-slate-900/60 px-3 py-1.5 text-xs text-slate-300 transition-colors hover:border-slate-600 hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#070a12]"
+            className="flex items-center gap-2 rounded-full border border-slate-700 bg-slate-900/60 px-3 py-1.5 text-xs text-slate-300 transition-colors hover:border-slate-600 hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
             aria-label={`IBM Z Status: ${ibmz.label}. Click to manage connection`}
           >
             {ibmz.connected ? (

@@ -200,9 +200,7 @@ export const ReplayLab: React.FC<Props> = ({ model, patients, remote, remoteLabe
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2">
-              <span className="rounded bg-cyan-950 px-2 py-0.5 font-mono text-xs font-semibold text-cyan-400 border border-cyan-800/50">
-                LIVE MODEL REPLAY
-              </span>
+              <span className="text-xs font-medium text-cyan-400">Live replay</span>
               {isWardPatient && (
                 <span className="flex items-center gap-1 rounded bg-orange-950/60 border border-orange-500/40 px-2 py-0.5 text-xs font-mono text-orange-300">
                   <Bed className="h-3 w-3" /> ICU Ward Bed: {p.id}
@@ -314,8 +312,8 @@ export const ReplayLab: React.FC<Props> = ({ model, patients, remote, remoteLabe
               <svg viewBox={`0 0 ${W} ${Hh}`} className="w-full h-full" aria-label="Sepsis risk trajectory graph">
                 {[0, 0.25, 0.5, 0.75, 1].map((g) => (
                   <g key={g}>
-                    <line x1={30} x2={W - 10} y1={sy(g)} y2={sy(g)} stroke="#1e293b" strokeWidth="1" />
-                    <text x={4} y={sy(g) + 3} fontSize="9" fill="#64748b" fontFamily="monospace">
+                    <line x1={30} x2={W - 10} y1={sy(g)} y2={sy(g)} stroke="#e5e8ee" strokeWidth="1" />
+                    <text x={4} y={sy(g) + 3} fontSize="9" fill="#64748b" fontFamily="Inter, system-ui, sans-serif">
                       {Math.round(g * 100)}%
                     </text>
                   </g>
@@ -330,7 +328,7 @@ export const ReplayLab: React.FC<Props> = ({ model, patients, remote, remoteLabe
                   strokeWidth="1.5"
                   strokeDasharray="5 4"
                 />
-                <text x={W - 160} y={sy(model.alert_threshold) - 5} fontSize="9" fill="#f97316" fontFamily="monospace">
+                <text x={W - 160} y={sy(model.alert_threshold) - 5} fontSize="9" fill="#f97316" fontFamily="Inter, system-ui, sans-serif">
                   alert threshold {Math.round(model.alert_threshold * 100)}%
                 </text>
 
@@ -342,11 +340,11 @@ export const ReplayLab: React.FC<Props> = ({ model, patients, remote, remoteLabe
                       x2={sx(p.onset)}
                       y1={10}
                       y2={Hh - 24}
-                      stroke="#f43f5e"
+                      stroke="#e11d48"
                       strokeWidth="1.5"
                       strokeDasharray="3 3"
                     />
-                    <text x={sx(p.onset) + 4} y={20} fontSize="10" fill="#f43f5e" fontFamily="monospace">
+                    <text x={sx(p.onset) + 4} y={20} fontSize="10" fill="#e11d48" fontFamily="Inter, system-ui, sans-serif">
                       sepsis onset (h{p.onset})
                     </text>
                   </g>
@@ -355,7 +353,7 @@ export const ReplayLab: React.FC<Props> = ({ model, patients, remote, remoteLabe
                 {/* Risk Trajectory Line (Cyan) */}
                 <polyline
                   fill="none"
-                  stroke="#06b6d4"
+                  stroke="#0f62fe"
                   strokeWidth="2.5"
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -375,7 +373,7 @@ export const ReplayLab: React.FC<Props> = ({ model, patients, remote, remoteLabe
                       fontSize="10"
                       fill="#f97316"
                       fontWeight="bold"
-                      fontFamily="monospace"
+                      fontFamily="Inter, system-ui, sans-serif"
                     >
                       ALERT h{firstAlert}
                     </text>
@@ -384,7 +382,7 @@ export const ReplayLab: React.FC<Props> = ({ model, patients, remote, remoteLabe
 
                 {/* X Axis Timeline Labels */}
                 {[0, 12, 24, 36, 47].map((h) => (
-                  <text key={h} x={sx(h)} y={Hh - 8} fontSize="9" fill="#64748b" textAnchor="middle" fontFamily="monospace">
+                  <text key={h} x={sx(h)} y={Hh - 8} fontSize="9" fill="#64748b" textAnchor="middle" fontFamily="Inter, system-ui, sans-serif">
                     h{h}
                   </text>
                 ))}
@@ -417,7 +415,7 @@ export const ReplayLab: React.FC<Props> = ({ model, patients, remote, remoteLabe
                 key={n}
                 className="rounded-lg border border-slate-800 bg-slate-950/70 p-2.5 text-center font-mono min-h-[72px]"
               >
-                <div className="text-[10px] uppercase tracking-wider text-slate-400">{n}</div>
+                <div className="text-[10px] text-slate-400">{n}</div>
                 <div className="text-lg font-bold text-slate-100 tabular-nums">
                   {v.toFixed(n === 'Temp' || n === 'Lactate' ? 1 : 0)}
                 </div>
@@ -455,7 +453,7 @@ export const ReplayLab: React.FC<Props> = ({ model, patients, remote, remoteLabe
                 <HelpCircle className="h-3.5 w-3.5 text-slate-400 shrink-0" aria-hidden="true" />
                 <span>
                   Conformal set @ {Math.round((1 - model.alpha) * 100)}%:{' '}
-                  <strong className="text-slate-200 uppercase">{cset}</strong>
+                  <strong className="text-slate-200">{cset}</strong>
                 </span>
               </div>
             </div>
@@ -475,7 +473,7 @@ export const ReplayLab: React.FC<Props> = ({ model, patients, remote, remoteLabe
           {/* Clinician Explainability & SHAP Contributions */}
           <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5 min-h-[300px]">
             <div className="flex items-center justify-between">
-              <h3 className="font-mono text-xs font-semibold uppercase tracking-wider text-slate-400">
+              <h3 className="font-mono text-xs font-semibold text-slate-400">
                 Clinical Attribution
               </h3>
               <span className="text-[11px] font-mono text-cyan-400">SHAP log-odds</span>

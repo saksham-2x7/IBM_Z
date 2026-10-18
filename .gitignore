@@ -26,3 +26,6 @@ __pycache__
 .claude
 docs/*.pdf
 data/
+alerts.log
+.test_alerts.log
+build/
