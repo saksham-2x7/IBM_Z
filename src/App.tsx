@@ -3,7 +3,6 @@ import { Header, Tab } from './components/Header';
 import { Hero } from './components/Hero';
 import { BenchmarkLab } from './components/BenchmarkLab';
 import { ArchitectureExplorer } from './components/ArchitectureExplorer';
-import { SubmissionHub } from './components/SubmissionHub';
 import { ReplayLab } from './components/ReplayLab';
 import { ValidationPanel } from './components/ValidationPanel';
 import { WardView } from './components/WardView';
@@ -20,6 +19,7 @@ const Loading = () => (
 );
 
 const KEY = 'auraz.endpoint';
+const DEFAULT_ENDPOINT = 'http://localhost:8080';
 
 export const App: React.FC = () => {
   const art = useArtifacts();
@@ -27,9 +27,9 @@ export const App: React.FC = () => {
   const [replayTarget, setReplayTarget] = useState<{ patient: ReplayPatient; hour: number } | null>(null);
   const [endpoint, setEndpoint] = useState<string>(() => {
     try {
-      return localStorage.getItem(KEY) ?? '';
+      return localStorage.getItem(KEY) || DEFAULT_ENDPOINT; // auto-connect: try the local inference service / SSH tunnel first
     } catch {
-      return '';
+      return DEFAULT_ENDPOINT;
     }
   });
   const [info, setInfo] = useState<Health | null>(null);
@@ -96,9 +96,6 @@ export const App: React.FC = () => {
                 onSelectPatient={handleSelectBed}
               />
             ) : <Loading />
-          )}
-          {tab === 'submission' && (
-            art ? <SubmissionHub m={art.metrics} /> : <Loading />
           )}
         </section>
       </main>

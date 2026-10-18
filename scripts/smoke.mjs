@@ -46,8 +46,8 @@ try {
   await send('Page.navigate', { url: APP }); await sleep(3500);
 
   // ---- tabs render
-  const tabs = ['Live Replay', 'Ward', 'Validation', 'IBM Z', 'Architecture', 'Submission'];
-  check('6 tabs present', (await ev(`return document.querySelectorAll('[role=tab]').length`)) === 6);
+  const tabs = ['Live Replay', 'Ward', 'Validation', 'IBM Z', 'Architecture'];
+  check('5 tabs present, no Submission tab', (await ev(`return document.querySelectorAll('[role=tab]').length`)) === 5 && !(await ev(`return document.body.innerText.includes('Submission')`)));
   for (const n of tabs) {
     const len = await ev(`${H} await tab(${JSON.stringify(n)}); return txt().length;`);
     check(`tab "${n}" renders content`, len > 200, `${len} chars`);
@@ -91,17 +91,15 @@ try {
   check('IBM Z: in-browser latency lab runs', /MEAN \/ INFERENCE/.test(lat) || /µs/.test(lat));
   await ev(`${H} await tab('Live Replay'); [...document.querySelectorAll('main button')].find(x=>x.textContent.includes('TEST-01')).click(); await w(2500);`);
   check('Live Replay scores on the connected host', /Scored on/.test(await ev(`${H} return txt()`)) && !/Scored in browser/.test(await ev(`${H} return txt()`)));
-  // ---- Architecture / Submission
+  // ---- Architecture
   check('Architecture: 6 layers', (await ev(`${H} await tab('Architecture'); return (txt().match(/^\\d · /gm)||[]).length`)) === 6);
-  const sub = await ev(`${H} await tab('Submission'); const n=[...document.querySelectorAll('main button')].filter(b=>/Copy/.test(b.textContent)); n.forEach(b=>b.click()); await w(500); return [n.length, txt()];`);
-  check('Submission: all fields have Copy buttons, real-data text present', sub[0] >= 6 && /Real-data evidence/.test(sub[1]), `${sub[0]} buttons`);
   // ---- Keyboard nav
   const kb = await ev(`${H} const t=[...document.querySelectorAll('[role=tab]')]; t[0].focus(); t[0].dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowRight',bubbles:true})); await w(500); return document.activeElement.textContent.trim();`);
   check('Keyboard: ArrowRight moves between tabs', /Ward/.test(kb), kb);
   // ---- mobile
   await send('Emulation.setDeviceMetricsOverride', { width: 390, height: 800, deviceScaleFactor: 1, mobile: true });
   await sleep(800);
-  const overflow = await ev(`${H} const out=[]; for (const n of ['Live Replay','Ward','Validation','IBM Z','Architecture','Submission']) { await tab(n); if (document.documentElement.scrollWidth > innerWidth + 2) out.push(n+':'+document.documentElement.scrollWidth); } return out;`);
+  const overflow = await ev(`${H} const out=[]; for (const n of ['Live Replay','Ward','Validation','IBM Z','Architecture']) { await tab(n); if (document.documentElement.scrollWidth > innerWidth + 2) out.push(n+':'+document.documentElement.scrollWidth); } return out;`);
   check('Mobile 390px: no horizontal overflow on any tab', overflow.length === 0, overflow.join(', '));
 
   const real_errors = errors.filter((e) => !/WebSocket|ERR_CONNECTION_REFUSED|localhost:9|Failed to load resource.*(8080|:9)/.test(e));
